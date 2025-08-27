@@ -3,7 +3,7 @@
  * Plugin Name: SwipeCommerce Pro - Horizontal Product Showcase
  * Plugin URI: https://swipecommerce.com
  * Description: Premium WooCommerce plugin that transforms product browsing with Netflix-style horizontal sliders
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: SwipeCommerce Team
  * Text Domain: swipecommerce-pro
  * Requires at least: 5.0
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 
 // Define constants
 if (!defined('SWIPECOMMERCE_VERSION')) {
-    define('SWIPECOMMERCE_VERSION', '1.0.2');
+    define('SWIPECOMMERCE_VERSION', '1.0.3');
 }
 if (!defined('SWIPECOMMERCE_PLUGIN_URL')) {
     define('SWIPECOMMERCE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -539,11 +539,13 @@ class SwipeCommercePro_Safe {
              data-tags="<?php echo esc_attr(implode(',', $tags)); ?>">
              
             <div class="swipecommerce-product-image">
-                <?php if ($product->get_image_id()): ?>
-                    <?php echo $product->get_image('woocommerce_thumbnail'); ?>
-                <?php else: ?>
-                    <div style="font-size: 48px;">📦</div>
-                <?php endif; ?>
+                <a href="<?php echo esc_url($product->get_permalink()); ?>" class="swipecommerce-product-image-link">
+                    <?php if ($product->get_image_id()): ?>
+                        <?php echo $product->get_image('woocommerce_thumbnail'); ?>
+                    <?php else: ?>
+                        <div style="font-size: 48px;">📦</div>
+                    <?php endif; ?>
+                </a>
                 
                 <?php if (!empty($badges)): ?>
                 <div class="swipecommerce-product-badges">
@@ -1321,16 +1323,65 @@ class SwipeCommercePro_Safe {
             }
 
             .drag-handle {
-                background: rgba(255,255,255,0.9);
-                border-radius: 6px;
-                padding: 6px;
-                cursor: move;
-                opacity: 0;
-                transition: opacity 0.2s;
+                background: rgba(34, 113, 177, 0.1);
+                border: 2px dashed rgba(34, 113, 177, 0.3);
+                border-radius: 8px;
+                padding: 8px;
+                cursor: grab;
+                opacity: 0.6;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            }
+
+            .drag-handle:hover {
+                background: rgba(34, 113, 177, 0.2);
+                border-color: rgba(34, 113, 177, 0.6);
+                opacity: 1;
+                transform: scale(1.1);
+                cursor: grabbing;
             }
 
             .category-card-enhanced:hover .drag-handle {
-                opacity: 1;
+                opacity: 0.9;
+            }
+
+            .category-card-enhanced.drag-mode {
+                opacity: 0.4;
+                transform: scale(0.95);
+                transition: all 0.3s ease;
+            }
+
+            .category-card-enhanced.ui-sortable-helper {
+                opacity: 1 !important;
+                transform: rotate(3deg) scale(1.03) !important;
+                z-index: 1000;
+            }
+
+            .category-placeholder {
+                background: rgba(34, 113, 177, 0.1);
+                border: 2px dashed rgba(34, 113, 177, 0.3);
+                border-radius: 12px;
+                margin: 15px;
+                min-height: 200px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .category-placeholder.active-placeholder {
+                background: rgba(34, 113, 177, 0.2);
+                border-color: rgba(34, 113, 177, 0.6);
+                transform: scale(1.02);
+            }
+
+            .category-placeholder::before {
+                content: '↓ Drop here ↓';
+                color: rgba(34, 113, 177, 0.7);
+                font-weight: 600;
+                font-size: 16px;
             }
 
             .category-status .status-active {
@@ -1593,16 +1644,33 @@ class SwipeCommercePro_Safe {
                         handle: '.drag-handle',
                         placeholder: 'category-placeholder',
                         tolerance: 'pointer',
+                        cursor: 'grabbing',
+                        distance: 10, // Require 10px movement to start drag
+                        cancel: '.action-btn, input, button, a', // Prevent dragging when clicking on these elements
                         start: function(e, ui) {
                             ui.placeholder.height(ui.item.height());
                             ui.item.addClass('ui-sortable-helper');
+                            // Add visual feedback to all cards
+                            $('#sortable-categories .category-card-enhanced:not(.ui-sortable-helper)').addClass('drag-mode');
                         },
                         stop: function(e, ui) {
                             ui.item.removeClass('ui-sortable-helper');
+                            $('#sortable-categories .category-card-enhanced').removeClass('drag-mode');
                             saveOrder();
+                        },
+                        over: function(e, ui) {
+                            ui.placeholder.addClass('active-placeholder');
+                        },
+                        out: function(e, ui) {
+                            ui.placeholder.removeClass('active-placeholder');
                         }
                     });
                 }
+
+                // Prevent accidental drag when clicking buttons
+                $(document).on('mousedown touchstart', '.action-btn, .category-checkbox', function(e) {
+                    e.stopPropagation();
+                });
 
                 // View toggle
                 $('.view-btn').click(function() {
@@ -2012,10 +2080,11 @@ class SwipeCommercePro_Safe {
                     
                     <tr>
                         <th scope="row">
-                            <label for="category_order"><?php esc_html_e('Display Order', 'swipecommerce-pro'); ?></label>
+                            <?php esc_html_e('Display Order', 'swipecommerce-pro'); ?>
                         </th>
                         <td>
-                            <input type="number" id="category_order" name="category_order" value="<?php echo esc_attr($category['order']); ?>" class="small-text" min="1">
+                            <span class="order-display"><?php echo esc_html($category['order']); ?></span>
+                            <p class="description"><?php esc_html_e('Use drag & drop in the categories list to change order.', 'swipecommerce-pro'); ?></p>
                         </td>
                     </tr>
                     

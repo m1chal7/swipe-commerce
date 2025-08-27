@@ -115,29 +115,27 @@
             wrapper.find('.swipecommerce-nav-pill').removeClass('active');
             pill.addClass('active');
             
-            // Show/hide category sections instead of individual products
-            if (categoryId === 'all') {
-                wrapper.find('.swipecommerce-category-section').show();
-            } else {
-                wrapper.find('.swipecommerce-category-section').each(function() {
-                    const sectionCategory = $(this).data('category');
-                    if (sectionCategory === categoryId) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
-            }
+            // Always show all category sections, just scroll to the target
+            wrapper.find('.swipecommerce-category-section').show();
             
-            // Scroll to the first visible category section
-            const firstVisibleSection = wrapper.find('.swipecommerce-category-section:visible').first();
-            if (firstVisibleSection.length) {
+            // Find and scroll to target category section
+            if (categoryId === 'all') {
+                // Scroll to beginning for "all"
                 const track = wrapper.find('.swipecommerce-slider-track');
-                const targetPosition = firstVisibleSection.position().left + track.scrollLeft();
-                
                 track.animate({
-                    scrollLeft: targetPosition
+                    scrollLeft: 0
                 }, 400, 'swing');
+            } else {
+                // Find specific category section and scroll to it
+                const targetSection = wrapper.find('.swipecommerce-category-section[data-category="' + categoryId + '"]');
+                if (targetSection.length) {
+                    const track = wrapper.find('.swipecommerce-slider-track');
+                    const targetPosition = targetSection.position().left + track.scrollLeft();
+                    
+                    track.animate({
+                        scrollLeft: targetPosition
+                    }, 400, 'swing');
+                }
             }
             
             updateProgressBar(wrapper);

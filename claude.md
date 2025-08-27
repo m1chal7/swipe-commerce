@@ -1,1 +1,1 @@
-When fininishing task, update the plugin version in @swipecommerce-pro-fixed.php
+When fininishing task, update the plugin version in @swipecommerce-pro.php

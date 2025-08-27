@@ -1,0 +1,712 @@
+/* SwipeCommerce Pro - Enhanced CSS to match HTML demo */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.swipecommerce-slider-wrapper {
+    width: 100%;
+    max-width: 1400px;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 30px 0;
+    position: relative;
+    overflow: hidden;
+    margin: 20px auto;
+}
+
+/* Category Navigator (matching demo) */
+.swipecommerce-category-navigator {
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 15px 40px;
+    border-bottom: 1px solid #e2e8f0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.swipecommerce-nav-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.swipecommerce-nav-pill {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #f7fafc;
+    border: 2px solid transparent;
+    color: #4a5568;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    user-select: none;
+}
+
+.swipecommerce-nav-pill:hover {
+    background: #edf2f7;
+    transform: translateY(-2px);
+}
+
+.swipecommerce-nav-pill.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+}
+
+.swipecommerce-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #f56565;
+    color: white;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.swipecommerce-quick-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.swipecommerce-filter-btn {
+    padding: 6px 14px;
+    border-radius: 15px;
+    border: 1px solid #cbd5e0;
+    background: white;
+    color: #4a5568;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.swipecommerce-filter-btn:hover {
+    background: #f7fafc;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.swipecommerce-filter-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* Progress Indicator */
+.swipecommerce-scroll-progress {
+    height: 3px;
+    background: #e2e8f0;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.swipecommerce-scroll-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    width: 20%;
+    transition: width 0.2s;
+}
+
+.swipecommerce-slider-header {
+    padding: 20px 40px;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 20px;
+}
+
+.swipecommerce-slider-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 8px;
+    margin: 0 0 8px 0;
+}
+
+.swipecommerce-slider-header p {
+    color: #718096;
+    font-size: 16px;
+    margin: 0;
+}
+
+.swipecommerce-slider-container {
+    position: relative;
+    padding: 0 60px;
+}
+
+.swipecommerce-slider-track {
+    display: flex;
+    gap: 40px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 10px 0 30px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
+}
+
+.swipecommerce-slider-track::-webkit-scrollbar {
+    display: none;
+}
+
+.swipecommerce-category-section {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+}
+
+.swipecommerce-category-header {
+    padding: 12px 20px;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.swipecommerce-category-meta {
+    font-size: 12px;
+    opacity: 0.9;
+    font-weight: 400;
+    text-transform: none;
+}
+
+/* Category gradient colors */
+.swipecommerce-category-bestsellers { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.swipecommerce-category-omega { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.swipecommerce-category-vitamins { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.swipecommerce-category-protein { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.swipecommerce-category-wellness { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+
+/* Custom category gradient colors */
+.swipecommerce-category-gradient-pink,
+.swipecommerce-category-header.gradient-pink { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+
+.swipecommerce-category-gradient-blue,
+.swipecommerce-category-header.gradient-blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+.swipecommerce-category-gradient-green,
+.swipecommerce-category-header.gradient-green { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+.swipecommerce-category-gradient-purple,
+.swipecommerce-category-header.gradient-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+.swipecommerce-category-gradient-orange,
+.swipecommerce-category-header.gradient-orange { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+.swipecommerce-products-row {
+    display: flex;
+    gap: 20px;
+}
+
+.swipecommerce-product-card {
+    width: 200px;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.swipecommerce-product-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.swipecommerce-product-image {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    position: relative;
+    overflow: hidden;
+}
+
+.swipecommerce-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.swipecommerce-product-badges {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.swipecommerce-product-badge {
+    background: #ff4757;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.swipecommerce-product-badge.badge-sale { background: #ff4757; }
+.swipecommerce-product-badge.badge-new { background: #00d2d3; }
+.swipecommerce-product-badge.badge-hot { background: #ff9ff3; }
+.swipecommerce-product-badge.badge-low-stock { background: #ee5a24; }
+.swipecommerce-product-badge.badge-featured { background: #ffd700; color: #333; }
+
+.swipecommerce-social-proof {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.swipecommerce-product-info {
+    padding: 16px;
+}
+
+.swipecommerce-product-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    min-height: 42px;
+}
+
+.swipecommerce-product-name a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.swipecommerce-product-name a:hover {
+    color: #667eea;
+}
+
+.swipecommerce-product-rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.swipecommerce-stars {
+    color: #fbbf24;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.swipecommerce-rating-count {
+    font-size: 12px;
+    color: #718096;
+}
+
+.swipecommerce-product-price {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.swipecommerce-price-current {
+    font-size: 20px;
+    font-weight: 700;
+    color: #4a5568;
+}
+
+.swipecommerce-price-original {
+    font-size: 14px;
+    color: #a0aec0;
+    text-decoration: line-through;
+}
+
+.swipecommerce-quick-add {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.swipecommerce-quantity-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.swipecommerce-qty-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #f7fafc;
+    color: #4a5568;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.swipecommerce-qty-btn:hover {
+    background: #e2e8f0;
+}
+
+.swipecommerce-qty-input {
+    width: 30px;
+    height: 28px;
+    border: none;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    background: white;
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.swipecommerce-qty-input::-webkit-outer-spin-button,
+.swipecommerce-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.swipecommerce-add-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.swipecommerce-add-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Navigation Buttons */
+.swipecommerce-nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.3s;
+}
+
+.swipecommerce-nav-button:hover {
+    background: #f7fafc;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.swipecommerce-nav-button.swipecommerce-prev { left: 10px; }
+.swipecommerce-nav-button.swipecommerce-next { right: 10px; }
+
+.swipecommerce-nav-button svg {
+    width: 24px;
+    height: 24px;
+    fill: #4a5568;
+}
+
+.swipecommerce-nav-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: translateY(-50%) scale(1);
+}
+
+.swipecommerce-nav-button:disabled:hover {
+    background: white;
+    transform: translateY(-50%) scale(1);
+}
+
+.swipecommerce-error,
+.swipecommerce-no-products {
+    padding: 40px;
+    text-align: center;
+    color: #718096;
+    font-size: 16px;
+    background: #f7fafc;
+    border-radius: 12px;
+    margin: 20px 0;
+}
+
+/* Enhanced interactions and animations */
+.swipecommerce-slider-track {
+    cursor: grab;
+}
+
+.swipecommerce-slider-track:active {
+    cursor: grabbing;
+}
+
+.swipecommerce-product-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swipecommerce-product-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15);
+}
+
+.swipecommerce-product-card.hovered {
+    transform: translateY(-4px) scale(1.01);
+}
+
+.swipecommerce-product-card.added-to-cart {
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+/* Enhanced button states */
+.swipecommerce-add-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.swipecommerce-add-btn.loading {
+    pointer-events: none;
+}
+
+.swipecommerce-add-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading-shine 1.5s infinite;
+}
+
+@keyframes loading-shine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.swipecommerce-add-btn.success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    transform: scale(1.05);
+}
+
+.swipecommerce-add-btn.error {
+    background: #ef4444 !important;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Enhanced navigation buttons */
+.swipecommerce-nav-button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swipecommerce-nav-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.swipecommerce-nav-button:hover:not(:disabled) svg {
+    fill: white;
+}
+
+.swipecommerce-nav-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: translateY(-50%) scale(0.9);
+}
+
+/* Filter button enhancements */
+.swipecommerce-filter-btn {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.swipecommerce-filter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.swipecommerce-filter-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Enhanced progress bar animation */
+.swipecommerce-scroll-progress-bar {
+    transition: width 0.2s ease-out;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+/* Category pill enhancements */
+.swipecommerce-nav-pill {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swipecommerce-nav-pill:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.swipecommerce-nav-pill.active {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+/* Quantity selector enhancements */
+.swipecommerce-qty-btn {
+    transition: all 0.2s ease;
+}
+
+.swipecommerce-qty-btn:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: scale(1.1);
+}
+
+.swipecommerce-qty-btn:active {
+    transform: scale(0.95);
+}
+
+/* Loading states */
+.swipecommerce-slider-wrapper.loading {
+    position: relative;
+}
+
+.swipecommerce-slider-wrapper.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.swipecommerce-slider-wrapper.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 1001;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .swipecommerce-product-card {
+        width: 160px;
+    }
+    
+    .swipecommerce-product-image {
+        height: 160px;
+    }
+    
+    .swipecommerce-slider-wrapper {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .swipecommerce-category-navigator {
+        padding: 10px 20px;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .swipecommerce-nav-pills {
+        justify-content: center;
+    }
+    
+    .swipecommerce-quick-filters {
+        justify-content: center;
+    }
+    
+    .swipecommerce-slider-header {
+        padding: 15px 20px;
+    }
+    
+    .swipecommerce-slider-header h2 {
+        font-size: 22px;
+    }
+    
+    .swipecommerce-slider-container {
+        padding: 0 40px;
+    }
+    
+    .swipecommerce-nav-button {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .swipecommerce-nav-button svg {
+        width: 20px;
+        height: 20px;
+    }
+}

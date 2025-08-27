@@ -1,0 +1,1 @@
+When fininishing task, update the plugin version. 

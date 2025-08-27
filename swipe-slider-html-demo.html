@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Product Slider</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .slider-wrapper {
+            width: 100%;
+            max-width: 1400px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px 0;
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        /* Sticky Navigation Bar */
+        .category-navigator {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 15px 40px;
+            border-bottom: 1px solid #e2e8f0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .nav-pills {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #f7fafc;
+            border: 2px solid transparent;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-pill:hover {
+            background: #edf2f7;
+            transform: translateY(-2px);
+        }
+
+        .nav-pill.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .nav-pill .count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f56565;
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 15px;
+            border: 1px solid #cbd5e0;
+            background: white;
+            color: #4a5568;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #f7fafc;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Progress Indicator */
+        .scroll-progress {
+            height: 3px;
+            background: #e2e8f0;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .scroll-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 20%;
+            transition: width 0.2s;
+        }
+
+        .slider-header {
+            padding: 20px 40px;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 20px;
+        }
+
+        .slider-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .slider-header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .slider-container {
+            position: relative;
+            padding: 0 60px;
+        }
+
+        .slider-track {
+            display: flex;
+            gap: 40px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 10px 0 30px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-snap-type: x mandatory;
+        }
+
+        .slider-track::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-section {
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+        }
+
+        .category-header {
+            padding: 12px 20px;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-meta {
+            font-size: 12px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .category-bestsellers { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .category-omega { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .category-vitamins { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .category-protein { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .category-wellness { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+
+        .products-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .product-card {
+            width: 200px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-badges {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .product-badge {
+            background: #ff4757;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-sale { background: #ff4757; }
+        .badge-new { background: #00d2d3; }
+        .badge-hot { background: #ff9ff3; }
+        .badge-low-stock { background: #ee5a24; }
+
+        .social-proof {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .product-info {
+            padding: 16px;
+        }
+
+        .product-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
+            min-height: 42px;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .stars {
+            color: #fbbf24;
+            font-size: 14px;
+        }
+
+        .rating-count {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .product-price {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .price-current {
+            font-size: 20px;
+            font-weight: 700;
+            color: #4a5568;
+        }
+
+        .price-original {
+            font-size: 14px;
+            color: #a0aec0;
+            text-decoration: line-through;
+        }
+
+        .quick-add {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f7fafc;
+            color: #4a5568;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .qty-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .qty-input {
+            width: 30px;
+            height: 28px;
+            border: none;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .add-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+
+        .nav-button:hover {
+            background: #f7fafc;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .nav-button.prev { left: 10px; }
+        .nav-button.next { right: 10px; }
+
+        .nav-button svg {
+            width: 24px;
+            height: 24px;
+            fill: #4a5568;
+        }
+
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Recently Viewed Bar */
+        .recently-viewed {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .recently-viewed.show {
+            transform: translateY(0);
+        }
+
+        .recently-viewed-title {
+            font-size: 12px;
+            color: #718096;
+            font-weight: 600;
+        }
+
+        .recently-viewed-items {
+            display: flex;
+            gap: 8px;
+        }
+
+        .recent-item {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: #f7fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .recent-item:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .category-navigator {
+                padding: 10px 20px;
+            }
+
+            .nav-pills {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .quick-filters {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .slider-container {
+                padding: 0 40px;
+            }
+
+            .product-card {
+                width: 160px;
+            }
+
+            .product-image {
+                height: 160px;
+                font-size: 36px;
+            }
+
+            .recently-viewed {
+                bottom: 10px;
+                right: 10px;
+                padding: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-pill {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .product-card {
+                width: 140px;
+            }
+
+            .product-image {
+                height: 140px;
+            }
+
+            .recently-viewed {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-wrapper">
+        <!-- Sticky Category Navigator -->
+        <div class="category-navigator">
+            <div class="nav-pills">
+                <div class="nav-pill active" data-category="bestsellers">
+                    Bestsellers
+                    <span class="count">4</span>
+                </div>
+                <div class="nav-pill" data-category="omega">
+                    Omega-3
+                </div>
+                <div class="nav-pill" data-category="vitamins">
+                    Vitamins
+                </div>
+                <div class="nav-pill" data-category="protein">
+                    Protein
+                </div>
+                <div class="nav-pill" data-category="wellness">
+                    Wellness
+                </div>
+            </div>
+            <div class="quick-filters">
+                <button class="filter-btn" data-filter="sale">On Sale</button>
+                <button class="filter-btn" data-filter="new">New</button>
+                <button class="filter-btn" data-filter="under30">Under $30</button>
+                <button class="filter-btn" data-filter="bestseller">Top Rated</button>
+            </div>
+            <div class="scroll-progress">
+                <div class="scroll-progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="slider-header">
+            <h2>Featured Collections</h2>
+            <p>Free shipping on orders over $50 • 30-day money back guarantee</p>
+        </div>
+        
+        <div class="slider-container">
+            <button class="nav-button prev" id="prevBtn" aria-label="Previous">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
+            
+            <button class="nav-button next" id="nextBtn" aria-label="Next">
+                <svg viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
+            
+            <div class="slider-track" id="sliderTrack">
+                <!-- Bestsellers Category -->
+                <div class="category-section" data-category="bestsellers">
+                    <div class="category-header category-bestsellers">
+                        <span>Bestsellers</span>
+                        <span class="category-meta">Most loved by customers</span>
+                    </div>
+                    <div class="products-row">
+                        <div class="product-card" data-price="39.99" data-tags="sale,bestseller">
+                            <div class="product-image">
+                                💊
+                                <div class="product-badges">
+                                    <span class="product-badge badge-sale">-20%</span>
+                                    <span class="product-badge badge-hot">HOT</span>
+                                </div>
+                                <div class="social-proof">
+                                    🔥 23 sold today
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Premium Multivitamin Complex</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(234)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$39.99</span>
+                                    <span class="price-original">$49.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="24.99" data-tags="bestseller">
+                            <div class="product-image">
+                                🌿
+                                <div class="product-badges">
+                                    <span class="product-badge badge-low-stock">Only 3 left!</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Organic Ashwagandha Extract</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-count">(189)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$24.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="34.99" data-tags="bestseller">
+                            <div class="product-image">
+                                ⚡
+                                <div class="social-proof">
+                                    👥 15 viewing now
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Energy Boost Formula</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(567)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$34.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="29.99" data-tags="sale">
+                            <div class="product-image">
+                                🧘
+                                <div class="product-badges">
+                                    <span class="product-badge badge-sale">-15%</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Stress Relief Capsules</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-count">(145)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$29.99</span>
+                                    <span class="price-original">$35.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Omega-3 Category -->
+                <div class="category-section" data-category="omega">
+                    <div class="category-header category-omega">
+                        <span>Omega-3</span>
+                        <span class="category-meta">Heart & brain health</span>
+                    </div>
+                    <div class="products-row">
+                        <div class="product-card" data-price="45.99" data-tags="">
+                            <div class="product-image">
+                                🐟
+                                <div class="social-proof">
+                                    ⭐ Bestseller
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Wild Alaskan Fish Oil</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(892)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$45.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="54.99" data-tags="new">
+                            <div class="product-image">
+                                🌊
+                                <div class="product-badges">
+                                    <span class="product-badge badge-new">NEW</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Krill Oil Supreme 1000mg</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(45)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$54.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="62.99" data-tags="sale">
+                            <div class="product-image">
+                                🧬
+                                <div class="product-badges">
+                                    <span class="product-badge badge-sale">-21%</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Triple Strength Omega Complex</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-count">(234)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$62.99</span>
+                                    <span class="price-original">$79.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="49.99" data-tags="">
+                            <div class="product-image">
+                                🌱
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Vegan Algae Omega-3</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(178)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$49.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vitamins Category -->
+                <div class="category-section" data-category="vitamins">
+                    <div class="category-header category-vitamins">
+                        <span>Vitamins</span>
+                        <span class="category-meta">Essential nutrients</span>
+                    </div>
+                    <div class="products-row">
+                        <div class="product-card" data-price="19.99" data-tags="">
+                            <div class="product-image">
+                                ☀️
+                                <div class="product-badges">
+                                    <span class="product-badge badge-low-stock">Low Stock</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Vitamin D3 5000 IU</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(1.2k)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$19.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="22.99" data-tags="">
+                            <div class="product-image">
+                                🍊
+                                <div class="social-proof">
+                                    💊 Doctor recommended
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Vitamin C with Rose Hips</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-count">(456)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$22.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="25.49" data-tags="sale">
+                            <div class="product-image">
+                                💪
+                                <div class="product-badges">
+                                    <span class="product-badge badge-sale">-15%</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">B-Complex Super Formula</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(789)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$25.49</span>
+                                    <span class="price-original">$29.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="28.99" data-tags="">
+                            <div class="product-image">
+                                🛡️
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Vitamin E 400 IU Mixed</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-count">(234)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$28.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="32.99" data-tags="new">
+                            <div class="product-image">
+                                🦴
+                                <div class="product-badges">
+                                    <span class="product-badge badge-new">NEW</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Vitamin K2 + D3 Combo</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(89)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$32.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Protein Category -->
+                <div class="category-section" data-category="protein">
+                    <div class="category-header category-protein">
+                        <span>Protein</span>
+                        <span class="category-meta">Muscle & recovery</span>
+                    </div>
+                    <div class="products-row">
+                        <div class="product-card" data-price="54.99" data-tags="">
+                            <div class="product-image">
+                                🥛
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Whey Protein Isolate Vanilla</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(2.3k)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$54.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="49.99" data-tags="">
+                            <div class="product-image">
+                                🌾
+                                <div class="product-badges">
+                                    <span class="product-badge" style="background: #10b981">VEGAN</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Plant-Based Protein Blend</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-count">(567)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$49.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="59.99" data-tags="">
+                            <div class="product-image">
+                                🍫
+                                <div class="social-proof">
+                                    🏆 Award winner
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Chocolate Casein Protein</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(890)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$59.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="44.99" data-tags="">
+                            <div class="product-image">
+                                🥜
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Peanut Butter Protein Powder</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(456)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$44.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wellness Category -->
+                <div class="category-section" data-category="wellness">
+                    <div class="category-header category-wellness">
+                        <span>Wellness</span>
+                        <span class="category-meta">Holistic health</span>
+                    </div>
+                    <div class="products-row">
+                        <div class="product-card" data-price="18.99" data-tags="">
+                            <div class="product-image">
+                                🌙
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Sleep Support Melatonin</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-count">(678)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$18.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="42.99" data-tags="">
+                            <div class="product-image">
+                                🧠
+                                <div class="product-badges">
+                                    <span class="product-badge badge-hot">TRENDING</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Brain Focus Nootropic</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(345)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$42.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="26.99" data-tags="sale">
+                            <div class="product-image">
+                                💚
+                                <div class="product-badges">
+                                    <span class="product-badge badge-sale">-25%</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Digestive Enzyme Complex</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★☆</span>
+                                    <span class="rating-count">(234)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$26.99</span>
+                                    <span class="price-original">$35.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="38.99" data-tags="">
+                            <div class="product-image">
+                                🦠
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Probiotic 50 Billion CFU</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(567)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$38.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="product-card" data-price="34.99" data-tags="new">
+                            <div class="product-image">
+                                🌸
+                                <div class="product-badges">
+                                    <span class="product-badge badge-new">NEW</span>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">Women's Daily Wellness</div>
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-count">(123)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$34.99</span>
+                                </div>
+                                <div class="quick-add">
+                                    <div class="quantity-selector">
+                                        <button class="qty-btn minus">−</button>
+                                        <input type="text" class="qty-input" value="1" readonly>
+                                        <button class="qty-btn plus">+</button>
+                                    </div>
+                                    <button class="add-btn">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Viewed Bar -->
+    <div class="recently-viewed" id="recentlyViewed">
+        <span class="recently-viewed-title">Recently Viewed</span>
+        <div class="recently-viewed-items" id="recentItems"></div>
+    </div>
+
+    <script>
+        const sliderTrack = document.getElementById('sliderTrack');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.querySelector('.scroll-progress-bar');
+        const navPills = document.querySelectorAll('.nav-pill');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const recentlyViewed = document.getElementById('recentlyViewed');
+        const recentItems = document.getElementById('recentItems');
+        
+        let isScrolling = false;
+        let viewedProducts = [];
+        let activeFilters = [];
+        
+        // Smooth scroll function
+        function smoothScroll(element, target, duration) {
+            const start = element.scrollLeft;
+            const change = target - start;
+            const startTime = performance.now();
+            
+            function animateScroll(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const easeInOutCubic = progress < 0.5
+                    ? 4 * progress * progress * progress
+                    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+                
+                element.scrollLeft = start + change * easeInOutCubic;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animateScroll);
+                } else {
+                    isScrolling = false;
+                    updateButtons();
+                }
+            }
+            
+            isScrolling = true;
+            requestAnimationFrame(animateScroll);
+        }
+        
+        // Update scroll progress
+        function updateScrollProgress() {
+            const scrollLeft = sliderTrack.scrollLeft;
+            const scrollWidth = sliderTrack.scrollWidth - sliderTrack.clientWidth;
+            const scrollPercent = (scrollLeft / scrollWidth) * 100;
+            progressBar.style.width = Math.max(20, scrollPercent) + '%';
+            
+            // Update active nav pill
+            const sections = document.querySelectorAll('.category-section');
+            sections.forEach((section, index) => {
+                const rect = section.getBoundingClientRect();
+                const trackRect = sliderTrack.getBoundingClientRect();
+                
+                if (rect.left >= trackRect.left && rect.left < trackRect.left + trackRect.width / 2) {
+                    navPills.forEach(pill => pill.classList.remove('active'));
+                    navPills[index]?.classList.add('active');
+                }
+            });
+        }
+        
+        // Category navigation
+        navPills.forEach(pill => {
+            pill.addEventListener('click', function() {
+                const category = this.dataset.category;
+                const section = document.querySelector(`.category-section[data-category="${category}"]`);
+                
+                if (section) {
+                    const sectionLeft = section.offsetLeft - sliderTrack.offsetLeft;
+                    smoothScroll(sliderTrack, sectionLeft - 60, 500);
+                    
+                    navPills.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Filter functionality
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filter = this.dataset.filter;
+                this.classList.toggle('active');
+                
+                if (this.classList.contains('active')) {
+                    activeFilters.push(filter);
+                } else {
+                    activeFilters = activeFilters.filter(f => f !== filter);
+                }
+                
+                applyFilters();
+            });
+        });
+        
+        function applyFilters() {
+            const cards = document.querySelectorAll('.product-card');
+            
+            cards.forEach(card => {
+                if (activeFilters.length === 0) {
+                    card.style.display = 'block';
+                    card.style.opacity = '1';
+                } else {
+                    let shouldShow = false;
+                    
+                    activeFilters.forEach(filter => {
+                        if (filter === 'sale' && card.dataset.tags.includes('sale')) shouldShow = true;
+                        if (filter === 'new' && card.dataset.tags.includes('new')) shouldShow = true;
+                        if (filter === 'under30' && parseFloat(card.dataset.price) < 30) shouldShow = true;
+                        if (filter === 'bestseller' && card.dataset.tags.includes('bestseller')) shouldShow = true;
+                    });
+                    
+                    if (shouldShow) {
+                        card.style.display = 'block';
+                        card.style.opacity = '1';
+                    } else {
+                        card.style.opacity = '0.3';
+                    }
+                }
+            });
+        }
+        
+        // Quantity selectors
+        document.querySelectorAll('.qty-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const input = this.parentElement.querySelector('.qty-input');
+                let value = parseInt(input.value);
+                
+                if (this.classList.contains('plus')) {
+                    value = Math.min(value + 1, 10);
+                } else {
+                    value = Math.max(value - 1, 1);
+                }
+                
+                input.value = value;
+            });
+        });
+        
+        // Add to cart with animation
+        document.querySelectorAll('.add-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                const originalText = this.textContent;
+                const qty = this.parentElement.querySelector('.qty-input').value;
+                
+                this.textContent = `✓ Added ${qty}`;
+                this.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.style.background = '';
+                }, 2000);
+            });
+        });
+        
+        // Track viewed products
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const productName = this.querySelector('.product-name').textContent;
+                const productEmoji = this.querySelector('.product-image').textContent.trim().charAt(0);
+                
+                // Add to recently viewed
+                if (!viewedProducts.find(p => p.name === productName)) {
+                    viewedProducts.unshift({ name: productName, emoji: productEmoji });
+                    viewedProducts = viewedProducts.slice(0, 5);
+                    updateRecentlyViewed();
+                }
+            });
+        });
+        
+        function updateRecentlyViewed() {
+            if (viewedProducts.length > 0) {
+                recentlyViewed.classList.add('show');
+                recentItems.innerHTML = viewedProducts.map(p => 
+                    `<div class="recent-item" title="${p.name}">${p.emoji}</div>`
+                ).join('');
+            }
+        }
+        
+        // Scroll navigation
+        function getScrollAmount() {
+            return sliderTrack.offsetWidth * 0.8;
+        }
+        
+        function updateButtons() {
+            const scrollLeft = sliderTrack.scrollLeft;
+            const scrollWidth = sliderTrack.scrollWidth;
+            const clientWidth = sliderTrack.clientWidth;
+            
+            prevBtn.disabled = scrollLeft <= 0;
+            nextBtn.disabled = scrollLeft >= scrollWidth - clientWidth - 10;
+        }
+        
+        function scrollNext() {
+            if (isScrolling) return;
+            const currentScroll = sliderTrack.scrollLeft;
+            const scrollAmount = getScrollAmount();
+            const maxScroll = sliderTrack.scrollWidth - sliderTrack.clientWidth;
+            const targetScroll = Math.min(currentScroll + scrollAmount, maxScroll);
+            smoothScroll(sliderTrack, targetScroll, 400);
+        }
+        
+        function scrollPrev() {
+            if (isScrolling) return;
+            const currentScroll = sliderTrack.scrollLeft;
+            const scrollAmount = getScrollAmount();
+            const targetScroll = Math.max(currentScroll - scrollAmount, 0);
+            smoothScroll(sliderTrack, targetScroll, 400);
+        }
+        
+        // Event listeners
+        prevBtn.addEventListener('click', scrollPrev);
+        nextBtn.addEventListener('click', scrollNext);
+        
+        sliderTrack.addEventListener('scroll', () => {
+            if (!isScrolling) {
+                updateButtons();
+                updateScrollProgress();
+            }
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') scrollPrev();
+            if (e.key === 'ArrowRight') scrollNext();
+        });
+        
+        // Touch support
+        let touchStartX = 0;
+        sliderTrack.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+        
+        sliderTrack.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) scrollNext();
+                else scrollPrev();
+            }
+        }, { passive: true });
+        
+        // Initialize
+        updateButtons();
+        updateScrollProgress();
+        
+        window.addEventListener('resize', () => {
+            updateButtons();
+            updateScrollProgress();
+        });
+    </script>
+</body>
+</html>

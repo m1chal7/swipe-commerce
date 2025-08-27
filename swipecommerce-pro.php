@@ -3,7 +3,7 @@
  * Plugin Name: SwipeCommerce Pro - Horizontal Product Showcase
  * Plugin URI: https://swipecommerce.com
  * Description: Premium WooCommerce plugin that transforms product browsing with Netflix-style horizontal sliders
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: SwipeCommerce Team
  * Text Domain: swipecommerce-pro
  * Requires at least: 5.0
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 
 // Define constants
 if (!defined('SWIPECOMMERCE_VERSION')) {
-    define('SWIPECOMMERCE_VERSION', '1.0.0');
+    define('SWIPECOMMERCE_VERSION', '1.0.2');
 }
 if (!defined('SWIPECOMMERCE_PLUGIN_URL')) {
     define('SWIPECOMMERCE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -1180,108 +1180,758 @@ class SwipeCommercePro_Safe {
             </div>
         </div>
 
-        <!-- Admin Styles -->
+        <!-- Enhanced Visual Manager Styles -->
         <style>
-            .swipecommerce-categories-admin .category-card {
-                background: white;
-                border: 1px solid #ddd;
+            /* Visual Manager Layout */
+            .swipecommerce-visual-manager {
+                background: #f9f9f9;
                 border-radius: 8px;
-                margin-bottom: 15px;
-                padding: 20px;
-                position: relative;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             }
-            .category-card h3 {
-                margin: 0 0 10px 0;
+
+            .visual-manager-header {
+                background: white;
+                padding: 20px;
+                border-bottom: 1px solid #e0e0e0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .view-controls {
+                display: flex;
+                gap: 10px;
+            }
+
+            .view-btn {
+                background: #f6f7f7;
+                border: 1px solid #ddd;
+                padding: 8px 15px;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .view-btn:hover {
+                background: #e8f0fe;
+                border-color: #2271b1;
+            }
+
+            .view-btn.active {
+                background: #2271b1;
+                color: white;
+                border-color: #2271b1;
+            }
+
+            .bulk-actions {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+
+            /* Empty State */
+            .no-categories-state {
+                text-align: center;
+                padding: 60px 20px;
+            }
+
+            .empty-state-icon {
+                margin-bottom: 20px;
+            }
+
+            .no-categories-state h3 {
+                color: #50575e;
+                margin-bottom: 10px;
+            }
+
+            .no-categories-state p {
+                color: #646970;
+                margin-bottom: 30px;
+            }
+
+            /* Drag Drop Notice */
+            .drag-drop-notice {
+                background: #e8f4fd;
+                border-left: 4px solid #2271b1;
+                padding: 12px 20px;
+                margin: 20px;
+                border-radius: 4px;
                 display: flex;
                 align-items: center;
                 gap: 10px;
+                color: #1d2327;
             }
-            .category-card .icon {
+
+            /* Categories Container */
+            .categories-container {
+                padding: 20px;
+                display: grid;
+                gap: 20px;
+            }
+
+            .categories-container.grid-view {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+
+            .categories-container.list-view {
+                grid-template-columns: 1fr;
+            }
+
+            /* Enhanced Category Cards */
+            .category-card-enhanced {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+                overflow: hidden;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                cursor: move;
+                position: relative;
+            }
+
+            .category-card-enhanced:hover {
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                transform: translateY(-2px);
+            }
+
+            .category-card-enhanced.ui-sortable-helper {
+                transform: rotate(5deg) scale(1.02);
+                box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+                z-index: 1000;
+            }
+
+            /* Card Header */
+            .category-card-header {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                z-index: 2;
+            }
+
+            .card-select input[type="checkbox"] {
+                transform: scale(1.2);
+            }
+
+            .drag-handle {
+                background: rgba(255,255,255,0.9);
+                border-radius: 6px;
+                padding: 6px;
+                cursor: move;
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+
+            .category-card-enhanced:hover .drag-handle {
+                opacity: 1;
+            }
+
+            .category-status .status-active {
+                color: #00a32a;
+            }
+
+            .category-status .status-inactive {
+                color: #dba617;
+            }
+
+            /* Visual Section */
+            .category-visual {
+                height: 120px;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .category-gradient-preview {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                opacity: 0.9;
+            }
+
+            .category-icon-large {
+                font-size: 48px;
+                z-index: 1;
+                position: relative;
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            }
+
+            /* Card Content */
+            .category-content {
+                padding: 20px;
+            }
+
+            .category-name {
+                font-size: 18px;
+                font-weight: 600;
+                margin: 0 0 8px 0;
+                color: #1d2327;
+            }
+
+            .category-description {
+                color: #646970;
+                font-size: 13px;
+                line-height: 1.4;
+                margin: 0 0 15px 0;
+            }
+
+            .category-stats {
+                display: flex;
+                gap: 20px;
+            }
+
+            .stat-item {
+                text-align: center;
+            }
+
+            .stat-number {
+                display: block;
+                font-size: 20px;
+                font-weight: 700;
+                color: #2271b1;
+            }
+
+            .stat-label {
+                font-size: 11px;
+                color: #646970;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            /* Card Actions */
+            .category-actions {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                display: flex;
+                gap: 5px;
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+
+            .category-card-enhanced:hover .category-actions {
+                opacity: 1;
+            }
+
+            .action-btn {
+                background: rgba(255,255,255,0.95);
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-decoration: none;
+                color: #50575e;
+            }
+
+            .action-btn:hover {
+                background: #2271b1;
+                color: white;
+                border-color: #2271b1;
+            }
+
+            .action-btn.delete-category:hover {
+                background: #d63638;
+                border-color: #d63638;
+            }
+
+            /* List View Modifications */
+            .categories-container.list-view .category-card-enhanced {
+                display: flex;
+                align-items: center;
+                padding: 20px;
+            }
+
+            .categories-container.list-view .category-visual {
+                width: 80px;
+                height: 60px;
+                margin-right: 20px;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            .categories-container.list-view .category-icon-large {
                 font-size: 24px;
             }
-            .category-card .actions {
-                position: absolute;
-                top: 15px;
-                right: 15px;
+
+            .categories-container.list-view .category-content {
+                flex: 1;
+                padding: 0;
             }
-            .category-card .meta {
+
+            .categories-container.list-view .category-stats {
+                margin-left: auto;
+                margin-right: 100px;
+            }
+
+            /* Modal Styles */
+            .swipecommerce-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                z-index: 100000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal-content {
+                background: white;
+                border-radius: 8px;
+                max-width: 500px;
+                width: 90%;
+                max-height: 90%;
+                overflow: auto;
+                box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            }
+
+            .modal-header {
+                padding: 20px 20px 0 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #e0e0e0;
+                margin-bottom: 20px;
+            }
+
+            .modal-header h2 {
+                margin: 0;
+                padding-bottom: 15px;
+            }
+
+            .modal-close {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
                 color: #666;
-                margin: 10px 0;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: background 0.2s;
             }
-            .category-card .products-count {
+
+            .modal-close:hover {
                 background: #f0f0f0;
-                padding: 5px 10px;
-                border-radius: 12px;
-                font-size: 12px;
-                display: inline-block;
             }
-            .color-scheme-preview {
-                width: 40px;
-                height: 20px;
-                border-radius: 10px;
-                display: inline-block;
-                margin-left: 10px;
+
+            .modal-body {
+                padding: 0 20px 20px 20px;
             }
+
+            .form-row {
+                margin-bottom: 20px;
+            }
+
+            .form-row label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 5px;
+            }
+
+            .modal-footer {
+                padding: 15px 20px;
+                border-top: 1px solid #e0e0e0;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+
+            /* Gradient Previews */
             .gradient-pink { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
             .gradient-blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
             .gradient-green { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
             .gradient-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
             .gradient-orange { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .visual-manager-header {
+                    flex-direction: column;
+                    gap: 15px;
+                    align-items: stretch;
+                }
+
+                .categories-container.grid-view {
+                    grid-template-columns: 1fr;
+                }
+
+                .categories-container.list-view .category-card-enhanced {
+                    flex-direction: column;
+                    text-align: center;
+                }
+
+                .categories-container.list-view .category-stats {
+                    margin: 15px 0 0 0;
+                }
+            }
         </style>
+
+        <!-- Enhanced JavaScript for Visual Manager -->
+        <script>
+            jQuery(document).ready(function($) {
+                // Initialize sortable
+                if (typeof $.fn.sortable !== 'undefined') {
+                    $('#sortable-categories').sortable({
+                        handle: '.drag-handle',
+                        placeholder: 'category-placeholder',
+                        tolerance: 'pointer',
+                        start: function(e, ui) {
+                            ui.placeholder.height(ui.item.height());
+                            ui.item.addClass('ui-sortable-helper');
+                        },
+                        stop: function(e, ui) {
+                            ui.item.removeClass('ui-sortable-helper');
+                            saveOrder();
+                        }
+                    });
+                }
+
+                // View toggle
+                $('.view-btn').click(function() {
+                    const view = $(this).data('view');
+                    $('.view-btn').removeClass('active');
+                    $(this).addClass('active');
+                    
+                    const container = $('.categories-container');
+                    container.removeClass('grid-view list-view').addClass(view + '-view');
+                });
+
+                // Quick edit modal
+                $('.quick-edit').click(function() {
+                    const categoryId = $(this).data('category-id');
+                    openQuickEditModal(categoryId);
+                });
+
+                $('.modal-close').click(function() {
+                    $('#quick-edit-modal').hide();
+                });
+
+                $('#save-quick-edit').click(function() {
+                    saveQuickEdit();
+                });
+
+                // Toggle visibility
+                $('.toggle-visibility').click(function() {
+                    const categoryId = $(this).data('category-id');
+                    const isVisible = $(this).data('visible') === 'true';
+                    toggleVisibility(categoryId, !isVisible);
+                });
+
+                // Delete category
+                $('.delete-category').click(function() {
+                    const categoryId = $(this).data('category-id');
+                    if (confirm('<?php esc_attr_e("Are you sure you want to delete this category?", "swipecommerce-pro"); ?>')) {
+                        deleteCategory(categoryId);
+                    }
+                });
+
+                // Bulk actions
+                $('#apply-bulk-action').click(function() {
+                    const action = $('#bulk-action-selector').val();
+                    const selected = $('.category-checkbox:checked').map(function() {
+                        return this.value;
+                    }).get();
+
+                    if (!action || selected.length === 0) {
+                        alert('<?php esc_attr_e("Please select an action and categories", "swipecommerce-pro"); ?>');
+                        return;
+                    }
+
+                    applyBulkAction(action, selected);
+                });
+
+                // Functions
+                function openQuickEditModal(categoryId) {
+                    // Get category data from card
+                    const card = $('[data-category-id="' + categoryId + '"]');
+                    const name = card.find('.category-name').text();
+                    const description = card.find('.category-description').text();
+                    const icon = card.find('.category-icon-large').text();
+                    const colorScheme = card.find('.category-gradient-preview').attr('class').replace('category-gradient-preview ', '');
+                    const isVisible = card.find('.toggle-visibility').data('visible') === 'true';
+
+                    // Populate modal
+                    $('#quick-edit-category-id').val(categoryId);
+                    $('#quick-edit-name').val(name);
+                    $('#quick-edit-description').val(description);
+                    $('#quick-edit-icon').val(icon);
+                    $('#quick-edit-color').val(colorScheme);
+                    $('#quick-edit-visibility').prop('checked', isVisible);
+
+                    // Show modal
+                    $('#quick-edit-modal').show();
+                }
+
+                function saveQuickEdit() {
+                    const categoryId = $('#quick-edit-category-id').val();
+                    const formData = {
+                        action: 'swipecommerce_save_category',
+                        nonce: '<?php echo wp_create_nonce("swipecommerce_admin_nonce"); ?>',
+                        id: categoryId,
+                        name: $('#quick-edit-name').val(),
+                        description: $('#quick-edit-description').val(),
+                        icon: $('#quick-edit-icon').val(),
+                        color_scheme: $('#quick-edit-color').val(),
+                        visibility: $('#quick-edit-visibility').is(':checked') ? '1' : '0',
+                        order: $('[data-category-id="' + categoryId + '"]').data('order')
+                    };
+
+                    $.post(ajaxurl, formData, function(response) {
+                        if (response.success) {
+                            $('#quick-edit-modal').hide();
+                            location.reload(); // Simple reload for now
+                        } else {
+                            alert('<?php esc_attr_e("Failed to save changes", "swipecommerce-pro"); ?>');
+                        }
+                    });
+                }
+
+                function toggleVisibility(categoryId, visible) {
+                    $.post(ajaxurl, {
+                        action: 'swipecommerce_toggle_category_visibility',
+                        nonce: '<?php echo wp_create_nonce("swipecommerce_admin_nonce"); ?>',
+                        category_id: categoryId,
+                        visible: visible ? '1' : '0'
+                    }, function(response) {
+                        if (response.success) {
+                            location.reload();
+                        }
+                    });
+                }
+
+                function deleteCategory(categoryId) {
+                    $.post(ajaxurl, {
+                        action: 'swipecommerce_delete_category',
+                        nonce: '<?php echo wp_create_nonce("swipecommerce_admin_nonce"); ?>',
+                        category_id: categoryId
+                    }, function(response) {
+                        if (response.success) {
+                            $('[data-category-id="' + categoryId + '"]').fadeOut(function() {
+                                $(this).remove();
+                            });
+                        }
+                    });
+                }
+
+                function saveOrder() {
+                    const order = $('#sortable-categories .category-card-enhanced').map(function(index) {
+                        return {
+                            id: $(this).data('category-id'),
+                            order: index + 1
+                        };
+                    }).get();
+
+                    $.post(ajaxurl, {
+                        action: 'swipecommerce_save_category_order',
+                        nonce: '<?php echo wp_create_nonce("swipecommerce_admin_nonce"); ?>',
+                        order: JSON.stringify(order)
+                    });
+                }
+
+                function applyBulkAction(action, categoryIds) {
+                    $.post(ajaxurl, {
+                        action: 'swipecommerce_bulk_category_action',
+                        nonce: '<?php echo wp_create_nonce("swipecommerce_admin_nonce"); ?>',
+                        bulk_action: action,
+                        category_ids: categoryIds
+                    }, function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert(response.data || '<?php esc_attr_e("Bulk action failed", "swipecommerce-pro"); ?>');
+                        }
+                    });
+                }
+            });
+        </script>
         <?php
     }
 
     private function render_categories_list($categories) {
         ?>
-        <div class="categories-list">
+        <div class="swipecommerce-visual-manager">
+            <!-- Top Bar -->
+            <div class="visual-manager-header">
+                <div class="view-controls">
+                    <button type="button" class="view-btn active" data-view="grid">
+                        <span class="dashicons dashicons-grid-view"></span> <?php esc_html_e('Grid View', 'swipecommerce-pro'); ?>
+                    </button>
+                    <button type="button" class="view-btn" data-view="list">
+                        <span class="dashicons dashicons-list-view"></span> <?php esc_html_e('List View', 'swipecommerce-pro'); ?>
+                    </button>
+                </div>
+                
+                <div class="bulk-actions">
+                    <select id="bulk-action-selector">
+                        <option value=""><?php esc_html_e('Bulk Actions', 'swipecommerce-pro'); ?></option>
+                        <option value="enable"><?php esc_html_e('Enable Selected', 'swipecommerce-pro'); ?></option>
+                        <option value="disable"><?php esc_html_e('Disable Selected', 'swipecommerce-pro'); ?></option>
+                        <option value="delete"><?php esc_html_e('Delete Selected', 'swipecommerce-pro'); ?></option>
+                    </select>
+                    <button type="button" class="button" id="apply-bulk-action">
+                        <?php esc_html_e('Apply', 'swipecommerce-pro'); ?>
+                    </button>
+                </div>
+            </div>
+
             <?php if (empty($categories)): ?>
-                <div class="no-categories">
-                    <p><?php esc_html_e('No custom categories created yet.', 'swipecommerce-pro'); ?></p>
-                    <a href="<?php echo admin_url('admin.php?page=swipecommerce-categories&action=new'); ?>" class="button button-primary">
+                <div class="no-categories-state">
+                    <div class="empty-state-icon">
+                        <span class="dashicons dashicons-category" style="font-size: 48px; color: #c3c4c7;"></span>
+                    </div>
+                    <h3><?php esc_html_e('No Custom Categories Yet', 'swipecommerce-pro'); ?></h3>
+                    <p><?php esc_html_e('Create your first custom category to organize products in beautiful Netflix-style sliders.', 'swipecommerce-pro'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=swipecommerce-categories&action=new'); ?>" class="button button-primary button-hero">
+                        <span class="dashicons dashicons-plus-alt" style="margin-right: 5px;"></span>
                         <?php esc_html_e('Create Your First Category', 'swipecommerce-pro'); ?>
                     </a>
                 </div>
             <?php else: ?>
-                <?php foreach ($categories as $category): ?>
-                    <div class="category-card">
-                        <div class="actions">
-                            <a href="<?php echo admin_url('admin.php?page=swipecommerce-categories&edit=' . $category['id']); ?>" class="button button-small">
-                                <?php esc_html_e('Edit', 'swipecommerce-pro'); ?>
-                            </a>
-                            <form method="post" style="display: inline;" onsubmit="return confirm('<?php esc_attr_e('Are you sure you want to delete this category?', 'swipecommerce-pro'); ?>');">
-                                <?php wp_nonce_field('swipecommerce_categories_nonce'); ?>
-                                <input type="hidden" name="action" value="delete_category">
-                                <input type="hidden" name="delete_category_id" value="<?php echo esc_attr($category['id']); ?>">
-                                <button type="submit" class="button button-small button-link-delete">
-                                    <?php esc_html_e('Delete', 'swipecommerce-pro'); ?>
+                <!-- Drag & Drop Notice -->
+                <div class="drag-drop-notice">
+                    <span class="dashicons dashicons-move"></span>
+                    <?php esc_html_e('Drag and drop categories to reorder them. Changes are saved automatically.', 'swipecommerce-pro'); ?>
+                </div>
+
+                <!-- Categories Grid/List -->
+                <div class="categories-container grid-view" id="sortable-categories">
+                    <?php foreach ($categories as $index => $category): ?>
+                        <div class="category-card-enhanced" data-category-id="<?php echo esc_attr($category['id']); ?>" data-order="<?php echo esc_attr($category['order']); ?>">
+                            <div class="category-card-header">
+                                <div class="card-select">
+                                    <input type="checkbox" class="category-checkbox" value="<?php echo esc_attr($category['id']); ?>">
+                                </div>
+                                <div class="drag-handle">
+                                    <span class="dashicons dashicons-move"></span>
+                                </div>
+                                <div class="category-status">
+                                    <?php if ($category['visibility']): ?>
+                                        <span class="status-active" title="<?php esc_attr_e('Visible', 'swipecommerce-pro'); ?>">
+                                            <span class="dashicons dashicons-visibility"></span>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="status-inactive" title="<?php esc_attr_e('Hidden', 'swipecommerce-pro'); ?>">
+                                            <span class="dashicons dashicons-hidden"></span>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <div class="category-visual">
+                                <div class="category-icon-large">
+                                    <?php echo esc_html($category['icon']); ?>
+                                </div>
+                                <div class="category-gradient-preview <?php echo esc_attr($category['color_scheme']); ?>"></div>
+                            </div>
+
+                            <div class="category-content">
+                                <h3 class="category-name"><?php echo esc_html($category['name']); ?></h3>
+                                <p class="category-description"><?php echo esc_html($category['description']); ?></p>
+                                
+                                <div class="category-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-number"><?php echo count($category['products']); ?></span>
+                                        <span class="stat-label"><?php esc_html_e('Products', 'swipecommerce-pro'); ?></span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-number"><?php echo esc_html($category['order']); ?></span>
+                                        <span class="stat-label"><?php esc_html_e('Order', 'swipecommerce-pro'); ?></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="category-actions">
+                                <button type="button" class="action-btn quick-edit" data-category-id="<?php echo esc_attr($category['id']); ?>" title="<?php esc_attr_e('Quick Edit', 'swipecommerce-pro'); ?>">
+                                    <span class="dashicons dashicons-edit"></span>
                                 </button>
-                            </form>
+                                <a href="<?php echo admin_url('admin.php?page=swipecommerce-categories&edit=' . $category['id']); ?>" class="action-btn" title="<?php esc_attr_e('Full Edit', 'swipecommerce-pro'); ?>">
+                                    <span class="dashicons dashicons-admin-generic"></span>
+                                </a>
+                                <button type="button" class="action-btn toggle-visibility" data-category-id="<?php echo esc_attr($category['id']); ?>" data-visible="<?php echo $category['visibility'] ? 'true' : 'false'; ?>" title="<?php esc_attr_e('Toggle Visibility', 'swipecommerce-pro'); ?>">
+                                    <span class="dashicons dashicons-<?php echo $category['visibility'] ? 'visibility' : 'hidden'; ?>"></span>
+                                </button>
+                                <button type="button" class="action-btn delete-category" data-category-id="<?php echo esc_attr($category['id']); ?>" title="<?php esc_attr_e('Delete', 'swipecommerce-pro'); ?>">
+                                    <span class="dashicons dashicons-trash"></span>
+                                </button>
+                            </div>
                         </div>
-
-                        <h3>
-                            <span class="icon"><?php echo esc_html($category['icon']); ?></span>
-                            <?php echo esc_html($category['name']); ?>
-                            <span class="color-scheme-preview <?php echo esc_attr($category['color_scheme']); ?>"></span>
-                        </h3>
-
-                        <div class="meta">
-                            <p><?php echo esc_html($category['description']); ?></p>
-                            <span class="products-count">
-                                <?php printf(
-                                    _n('%d product', '%d products', count($category['products']), 'swipecommerce-pro'),
-                                    count($category['products'])
-                                ); ?>
-                            </span>
-                            
-                            <?php if (!$category['visibility']): ?>
-                                <span style="color: orange; margin-left: 10px;">
-                                    <?php esc_html_e('Hidden', 'swipecommerce-pro'); ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
+        </div>
+
+        <!-- Quick Edit Modal -->
+        <div id="quick-edit-modal" class="swipecommerce-modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><?php esc_html_e('Quick Edit Category', 'swipecommerce-pro'); ?></h2>
+                    <button type="button" class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="quick-edit-form">
+                        <input type="hidden" id="quick-edit-category-id">
+                        
+                        <div class="form-row">
+                            <label for="quick-edit-name"><?php esc_html_e('Category Name', 'swipecommerce-pro'); ?></label>
+                            <input type="text" id="quick-edit-name" class="regular-text" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label for="quick-edit-description"><?php esc_html_e('Description', 'swipecommerce-pro'); ?></label>
+                            <textarea id="quick-edit-description" rows="3" class="large-text"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label for="quick-edit-icon"><?php esc_html_e('Icon', 'swipecommerce-pro'); ?></label>
+                            <input type="text" id="quick-edit-icon" class="small-text">
+                        </div>
+                        
+                        <div class="form-row">
+                            <label for="quick-edit-color"><?php esc_html_e('Color Scheme', 'swipecommerce-pro'); ?></label>
+                            <select id="quick-edit-color">
+                                <option value="gradient-pink"><?php esc_html_e('Pink Gradient', 'swipecommerce-pro'); ?></option>
+                                <option value="gradient-blue"><?php esc_html_e('Blue Gradient', 'swipecommerce-pro'); ?></option>
+                                <option value="gradient-green"><?php esc_html_e('Green Gradient', 'swipecommerce-pro'); ?></option>
+                                <option value="gradient-purple"><?php esc_html_e('Purple Gradient', 'swipecommerce-pro'); ?></option>
+                                <option value="gradient-orange"><?php esc_html_e('Orange Gradient', 'swipecommerce-pro'); ?></option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label>
+                                <input type="checkbox" id="quick-edit-visibility">
+                                <?php esc_html_e('Visible in frontend', 'swipecommerce-pro'); ?>
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="button button-primary" id="save-quick-edit">
+                        <?php esc_html_e('Save Changes', 'swipecommerce-pro'); ?>
+                    </button>
+                    <button type="button" class="button modal-close">
+                        <?php esc_html_e('Cancel', 'swipecommerce-pro'); ?>
+                    </button>
+                </div>
+            </div>
         </div>
         <?php
     }

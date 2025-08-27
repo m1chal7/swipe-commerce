@@ -109,19 +109,19 @@
         // Category pills navigation
         wrapper.find('.swipecommerce-nav-pill').on('click', function() {
             const pill = $(this);
-            const category = pill.data('category');
+            const categoryId = pill.data('category');
             
             // Update active state
             wrapper.find('.swipecommerce-nav-pill').removeClass('active');
             pill.addClass('active');
             
-            // Filter products or scroll to category
-            if (category === 'all') {
-                wrapper.find('.swipecommerce-product-card').show();
+            // Show/hide category sections instead of individual products
+            if (categoryId === 'all') {
+                wrapper.find('.swipecommerce-category-section').show();
             } else {
-                wrapper.find('.swipecommerce-product-card').each(function() {
-                    const productTags = $(this).data('tags') || '';
-                    if (productTags.includes(category)) {
+                wrapper.find('.swipecommerce-category-section').each(function() {
+                    const sectionCategory = $(this).data('category');
+                    if (sectionCategory === categoryId) {
                         $(this).show();
                     } else {
                         $(this).hide();
@@ -129,7 +129,19 @@
                 });
             }
             
+            // Scroll to the first visible category section
+            const firstVisibleSection = wrapper.find('.swipecommerce-category-section:visible').first();
+            if (firstVisibleSection.length) {
+                const track = wrapper.find('.swipecommerce-slider-track');
+                const targetPosition = firstVisibleSection.position().left + track.scrollLeft();
+                
+                track.animate({
+                    scrollLeft: targetPosition
+                }, 400, 'swing');
+            }
+            
             updateProgressBar(wrapper);
+            updateNavigationState(wrapper);
         });
     }
 
@@ -153,15 +165,33 @@
             activeFilters.push($(this).data('filter'));
         });
         
-        wrapper.find('.swipecommerce-product-card').each(function() {
-            const card = $(this);
-            const tags = (card.data('tags') || '').split(',');
+        // Apply filters to products within currently visible category sections
+        wrapper.find('.swipecommerce-category-section:visible').each(function() {
+            const categorySection = $(this);
+            let hasVisibleProducts = false;
             
-            if (activeFilters.length === 0) {
-                card.show();
+            categorySection.find('.swipecommerce-product-card').each(function() {
+                const card = $(this);
+                const tags = (card.data('tags') || '').toString().split(',');
+                
+                if (activeFilters.length === 0) {
+                    card.show();
+                    hasVisibleProducts = true;
+                } else {
+                    const hasMatchingTag = activeFilters.some(filter => tags.includes(filter));
+                    card.toggle(hasMatchingTag);
+                    if (hasMatchingTag) {
+                        hasVisibleProducts = true;
+                    }
+                }
+            });
+            
+            // Hide category section if no products match the filter
+            const categoryHeader = categorySection.find('.swipecommerce-category-header');
+            if (hasVisibleProducts) {
+                categoryHeader.show();
             } else {
-                const hasMatchingTag = activeFilters.some(filter => tags.includes(filter));
-                card.toggle(hasMatchingTag);
+                categoryHeader.hide();
             }
         });
         

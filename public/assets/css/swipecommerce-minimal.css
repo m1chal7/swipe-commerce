@@ -180,6 +180,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Default gradient */
 }
 
 .swipecommerce-category-meta {
@@ -196,21 +197,26 @@ body {
 .swipecommerce-category-protein { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
 .swipecommerce-category-wellness { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
 
-/* Custom category gradient colors */
-.swipecommerce-category-gradient-pink,
-.swipecommerce-category-header.gradient-pink { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+/* Custom category gradient colors - Higher specificity */
+.swipecommerce-category-header.gradient-pink {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+}
 
-.swipecommerce-category-gradient-blue,
-.swipecommerce-category-header.gradient-blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.swipecommerce-category-header.gradient-blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
 
-.swipecommerce-category-gradient-green,
-.swipecommerce-category-header.gradient-green { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.swipecommerce-category-header.gradient-green {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+}
 
-.swipecommerce-category-gradient-purple,
-.swipecommerce-category-header.gradient-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.swipecommerce-category-header.gradient-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
 
-.swipecommerce-category-gradient-orange,
-.swipecommerce-category-header.gradient-orange { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.swipecommerce-category-header.gradient-orange {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
+}
 
 .swipecommerce-products-row {
     display: flex;

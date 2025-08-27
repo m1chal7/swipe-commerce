@@ -3,7 +3,7 @@
  * Plugin Name: SwipeCommerce Pro - Horizontal Product Showcase
  * Plugin URI: https://swipecommerce.com
  * Description: Premium WooCommerce plugin that transforms product browsing with Netflix-style horizontal sliders
- * Version: 1.0.4
+ * Version: 1.0.6
  * Author: SwipeCommerce Team
  * Text Domain: swipecommerce-pro
  * Requires at least: 5.0
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 
 // Define constants
 if (!defined('SWIPECOMMERCE_VERSION')) {
-    define('SWIPECOMMERCE_VERSION', '1.0.4');
+    define('SWIPECOMMERCE_VERSION', '1.0.6');
 }
 if (!defined('SWIPECOMMERCE_PLUGIN_URL')) {
     define('SWIPECOMMERCE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -939,7 +939,7 @@ class SwipeCommercePro_Safe {
             'icon' => wp_kses($_POST['icon'] ?? '🏆', array()),
             'order' => intval($_POST['order'] ?? 1),
             'products' => array_map('intval', explode(',', $_POST['products'] ?? '')),
-            'visibility' => !empty($_POST['visibility'])
+            'visibility' => isset($_POST['visibility']) ? !empty($_POST['visibility']) : true // Default to visible when field not present
         );
         
         // Generate ID if new category
@@ -1033,94 +1033,83 @@ class SwipeCommercePro_Safe {
         $page = intval($_POST['page'] ?? 1);
         $per_page = 50; // Increased from 20
         
+        // If search term is empty, return recent products for better UX
         if (empty($search_term)) {
-            wp_send_json_success(array('products' => array(), 'has_more' => false));
-        }
-        
-        try {
-            // Multi-method search approach
-            $results = array();
-            $found_ids = array();
-            
-            // 1. WooCommerce native search (titles, content)
             $args = array(
-                'search' => $search_term,
                 'status' => 'publish',
                 'limit' => $per_page,
                 'offset' => ($page - 1) * $per_page,
-                'orderby' => 'relevance'
+                'orderby' => 'date',
+                'order' => 'DESC'
             );
             
             $products = wc_get_products($args);
+            $results = array();
+            
             foreach ($products as $product) {
-                if (!in_array($product->get_id(), $found_ids)) {
-                    $found_ids[] = $product->get_id();
-                    $results[] = $this->format_product_for_search($product);
-                }
+                $results[] = $this->format_product_for_search($product);
             }
             
-            // 2. SKU search if we have room for more results
-            if (count($results) < $per_page) {
-                $sku_search = new WP_Query(array(
-                    'post_type' => 'product',
-                    'post_status' => 'publish',
-                    'posts_per_page' => $per_page - count($results),
-                    'meta_query' => array(
-                        array(
-                            'key' => '_sku',
-                            'value' => $search_term,
-                            'compare' => 'LIKE'
-                        )
+            wp_send_json_success(array(
+                'products' => $results,
+                'has_more' => count($results) >= $per_page,
+                'total_found' => count($results)
+            ));
+            return;
+        }
+        
+        try {
+            $results = array();
+            
+            // Simple and reliable search approach
+            $args = array(
+                'post_type' => 'product',
+                'post_status' => 'publish',
+                'posts_per_page' => $per_page,
+                'paged' => $page,
+                's' => $search_term, // WordPress native search
+                'meta_query' => array(
+                    'relation' => 'OR',
+                    array(
+                        'key' => '_sku',
+                        'value' => $search_term,
+                        'compare' => 'LIKE'
                     ),
-                    'post__not_in' => $found_ids
-                ));
-                
-                if ($sku_search->have_posts()) {
-                    foreach ($sku_search->posts as $post) {
-                        $product = wc_get_product($post->ID);
-                        if ($product && !in_array($product->get_id(), $found_ids)) {
-                            $found_ids[] = $product->get_id();
-                            $results[] = $this->format_product_for_search($product);
-                        }
-                    }
-                }
-            }
+                    array(
+                        'key' => '_sku',
+                        'compare' => 'NOT EXISTS', // Allow products without SKU to be found by title
+                        'value' => ''
+                    )
+                )
+            );
             
-            // 3. Category search if we still have room
-            if (count($results) < $per_page) {
-                $remaining = $per_page - count($results);
-                $cat_search = new WP_Query(array(
-                    'post_type' => 'product',
-                    'post_status' => 'publish',
-                    'posts_per_page' => $remaining,
-                    's' => $search_term, // WordPress native search includes excerpts/content
-                    'post__not_in' => $found_ids
-                ));
-                
-                if ($cat_search->have_posts()) {
-                    foreach ($cat_search->posts as $post) {
-                        $product = wc_get_product($post->ID);
-                        if ($product && !in_array($product->get_id(), $found_ids)) {
-                            $found_ids[] = $product->get_id();
-                            $results[] = $this->format_product_for_search($product);
-                        }
+            $query = new WP_Query($args);
+            
+            if ($query->have_posts()) {
+                while ($query->have_posts()) {
+                    $query->the_post();
+                    $product = wc_get_product(get_the_ID());
+                    if ($product) {
+                        $results[] = $this->format_product_for_search($product);
                     }
                 }
+                wp_reset_postdata();
             }
             
             // Check if there are more results
-            $has_more = count($results) >= $per_page;
+            $has_more = $query->found_posts > ($page * $per_page);
             
             wp_send_json_success(array(
                 'products' => $results,
                 'has_more' => $has_more,
                 'page' => $page,
-                'total_found' => count($found_ids)
+                'total_found' => $query->found_posts,
+                'debug_query' => $args // Temporary debug info
             ));
             
         } catch (Exception $e) {
             error_log('SwipeCommerce search error: ' . $e->getMessage());
-            wp_send_json_error(__('Search failed', 'swipecommerce-pro'));
+            wp_send_json_error(__('Search failed: ' . $e->getMessage(), 'swipecommerce-pro'));
         }
     }
     
@@ -1172,7 +1161,7 @@ class SwipeCommercePro_Safe {
             'icon' => wp_kses($_POST['category_icon'] ?? '🏆', array()),
             'order' => intval($_POST['category_order'] ?? 1),
             'products' => array_filter(array_map('intval', explode(',', $_POST['category_products'] ?? ''))),
-            'visibility' => !empty($_POST['category_visibility'])
+            'visibility' => isset($_POST['category_visibility']) ? !empty($_POST['category_visibility']) : true // Default to visible when field not present
         );
         
         // Generate ID if new category
@@ -1319,7 +1308,7 @@ class SwipeCommercePro_Safe {
             }
 
             .categories-container.grid-view {
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
             }
 
             .categories-container.list-view {
@@ -1627,19 +1616,36 @@ class SwipeCommercePro_Safe {
                 border-color: #d63638;
             }
 
+            /* Grid View Specific Styles */
+            .categories-container.grid-view .card-main-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .categories-container.grid-view .category-visual {
+                align-self: center;
+            }
+
+            .categories-container.grid-view .category-content {
+                text-align: center;
+            }
+
             /* List View Modifications */
             .categories-container.list-view .category-card-enhanced {
-                display: flex;
+                min-height: 120px;
+            }
+
+            .categories-container.list-view .card-main-content {
+                flex-direction: row;
                 align-items: center;
-                padding: 20px;
             }
 
             .categories-container.list-view .category-visual {
                 width: 80px;
                 height: 60px;
                 margin-right: 20px;
+                flex-shrink: 0;
                 border-radius: 8px;
-                overflow: hidden;
             }
 
             .categories-container.list-view .category-icon-large {
@@ -1648,12 +1654,12 @@ class SwipeCommercePro_Safe {
 
             .categories-container.list-view .category-content {
                 flex: 1;
-                padding: 0;
+                text-align: left;
             }
 
             .categories-container.list-view .category-stats {
-                margin-left: auto;
-                margin-right: 100px;
+                margin-left: 20px;
+                margin-right: 0;
             }
 
             /* Modal Styles */
@@ -1827,12 +1833,14 @@ class SwipeCommercePro_Safe {
                     saveQuickEdit();
                 });
 
-                // Toggle visibility
+                // Toggle visibility - temporarily disabled
+                /*
                 $('.toggle-visibility').click(function() {
                     const categoryId = $(this).data('category-id');
                     const isVisible = $(this).data('visible') === 'true';
                     toggleVisibility(categoryId, !isVisible);
                 });
+                */
 
                 // Delete category
                 $('.delete-category').click(function() {
@@ -1903,6 +1911,8 @@ class SwipeCommercePro_Safe {
                     });
                 }
 
+                // toggleVisibility function - temporarily disabled
+                /*
                 function toggleVisibility(categoryId, visible) {
                     $.post(ajaxurl, {
                         action: 'swipecommerce_toggle_category_visibility',
@@ -1915,6 +1925,7 @@ class SwipeCommercePro_Safe {
                         }
                     });
                 }
+                */
 
                 function deleteCategory(categoryId) {
                     $.post(ajaxurl, {
@@ -2084,17 +2095,7 @@ class SwipeCommercePro_Safe {
                                 <div class="category-content">
                                     <div class="category-header-info">
                                         <h3 class="category-name"><?php echo esc_html($category['name']); ?></h3>
-                                        <div class="category-status">
-                                            <?php if ($category['visibility']): ?>
-                                                <span class="status-active" title="<?php esc_attr_e('Visible', 'swipecommerce-pro'); ?>">
-                                                    <span class="dashicons dashicons-visibility"></span>
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="status-inactive" title="<?php esc_attr_e('Hidden', 'swipecommerce-pro'); ?>">
-                                                    <span class="dashicons dashicons-hidden"></span>
-                                                </span>
-                                            <?php endif; ?>
-                                        </div>
+                                        <!-- Visibility status temporarily hidden -->
                                     </div>
                                     <p class="category-description"><?php echo esc_html($category['description']); ?></p>
                                     
@@ -2119,9 +2120,11 @@ class SwipeCommercePro_Safe {
                                 <a href="<?php echo admin_url('admin.php?page=swipecommerce-categories&edit=' . $category['id']); ?>" class="action-btn" title="<?php esc_attr_e('Full Edit', 'swipecommerce-pro'); ?>">
                                     <span class="dashicons dashicons-admin-generic"></span>
                                 </a>
+                                <!-- Visibility toggle temporarily hidden
                                 <button type="button" class="action-btn toggle-visibility" data-category-id="<?php echo esc_attr($category['id']); ?>" data-visible="<?php echo $category['visibility'] ? 'true' : 'false'; ?>" title="<?php esc_attr_e('Toggle Visibility', 'swipecommerce-pro'); ?>">
                                     <span class="dashicons dashicons-<?php echo $category['visibility'] ? 'visibility' : 'hidden'; ?>"></span>
                                 </button>
+                                -->
                                 <button type="button" class="action-btn delete-category" data-category-id="<?php echo esc_attr($category['id']); ?>" title="<?php esc_attr_e('Delete', 'swipecommerce-pro'); ?>">
                                     <span class="dashicons dashicons-trash"></span>
                                 </button>
@@ -2169,12 +2172,14 @@ class SwipeCommercePro_Safe {
                             </select>
                         </div>
                         
+                        <!-- Visibility option temporarily hidden
                         <div class="form-row">
                             <label>
                                 <input type="checkbox" id="quick-edit-visibility">
                                 <?php esc_html_e('Visible in frontend', 'swipecommerce-pro'); ?>
                             </label>
                         </div>
+                        -->
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -2283,6 +2288,7 @@ class SwipeCommercePro_Safe {
                                 <input type="checkbox" name="category_visibility" value="1" <?php checked($category['visibility'], true); ?>>
                                 <?php esc_html_e('Show this category in sliders', 'swipecommerce-pro'); ?>
                             </label>
+                            <p class="description"><?php esc_html_e('Uncheck to hide this category from frontend sliders', 'swipecommerce-pro'); ?></p>
                         </td>
                     </tr>
                     
@@ -2291,16 +2297,43 @@ class SwipeCommercePro_Safe {
                             <label><?php esc_html_e('Assigned Products', 'swipecommerce-pro'); ?></label>
                         </th>
                         <td>
-                            <div id="assigned-products">
+                            <div id="enhanced-product-selector">
                                 <input type="hidden" id="category_products" name="category_products" value="<?php echo esc_attr(implode(',', $category['products'])); ?>">
                                 
-                                <div class="product-search">
-                                    <input type="text" id="product-search" placeholder="<?php esc_attr_e('Search products...', 'swipecommerce-pro'); ?>" class="regular-text">
-                                    <div id="search-results" style="display: none;"></div>
-                                </div>
-                                
-                                <div id="selected-products" class="selected-products">
-                                    <!-- Selected products will be loaded here -->
+                                <!-- Product Selection Interface -->
+                                <div class="product-selector-container">
+                                    
+                                    <!-- Search & Filter Section -->
+                                    <div class="product-search-section">
+                                        <div class="search-header">
+                                            <h4><?php esc_html_e('Add Products to Category', 'swipecommerce-pro'); ?></h4>
+                                            <div class="search-controls">
+                                                <input type="text" id="product-search" placeholder="<?php esc_attr_e('Search products by name, SKU...', 'swipecommerce-pro'); ?>" class="regular-text">
+                                                <button type="button" class="button" id="clear-search"><?php esc_html_e('Show All', 'swipecommerce-pro'); ?></button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div id="search-results" class="product-grid">
+                                            <div class="search-loading"><?php esc_html_e('Loading products...', 'swipecommerce-pro'); ?></div>
+                                        </div>
+                                        
+                                        <div id="load-more-products" style="display: none;">
+                                            <button type="button" class="button" id="load-more-btn"><?php esc_html_e('Load More Products', 'swipecommerce-pro'); ?></button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Selected Products Preview -->
+                                    <div class="selected-products-section">
+                                        <div class="selected-header">
+                                            <h4><?php esc_html_e('Selected Products', 'swipecommerce-pro'); ?> <span id="selected-count">0</span></h4>
+                                            <button type="button" class="button" id="clear-all-selections"><?php esc_html_e('Clear All', 'swipecommerce-pro'); ?></button>
+                                        </div>
+                                        
+                                        <div id="selected-products-preview" class="selected-products-grid">
+                                            <div class="no-products-message"><?php esc_html_e('No products selected. Search and click products to add them.', 'swipecommerce-pro'); ?></div>
+                                        </div>
+                                    </div>
+                                    
                                 </div>
                             </div>
                         </td>
@@ -2316,11 +2349,17 @@ class SwipeCommercePro_Safe {
             </form>
         </div>
 
-        <!-- Enhanced Admin JavaScript -->
+        <!-- Enhanced Product Selection JavaScript -->
         <script>
             jQuery(document).ready(function($) {
-                // Load existing products
-                loadSelectedProducts();
+                let currentPage = 1;
+                let isLoading = false;
+                let currentSearchTerm = '';
+                let selectedProductsCache = {};
+
+                // Initialize
+                loadInitialProducts();
+                loadSelectedProductsPreview();
                 
                 // Color scheme preview update
                 $('#color_scheme').change(function() {
@@ -2331,20 +2370,55 @@ class SwipeCommercePro_Safe {
                 let searchTimeout;
                 $('#product-search').on('input', function() {
                     clearTimeout(searchTimeout);
-                    const searchTerm = $(this).val();
-                    
-                    if (searchTerm.length < 2) {
-                        $('#search-results').hide();
-                        return;
-                    }
+                    currentSearchTerm = $(this).val().trim();
+                    currentPage = 1;
                     
                     searchTimeout = setTimeout(() => {
-                        searchProducts(searchTerm);
+                        searchProducts(currentSearchTerm, 1);
                     }, 300);
                 });
+
+                // Clear search / Show all products
+                $('#clear-search').on('click', function() {
+                    $('#product-search').val('');
+                    currentSearchTerm = '';
+                    currentPage = 1;
+                    searchProducts('', 1);
+                });
+
+                // Load more products
+                $('#load-more-btn').on('click', function() {
+                    if (!isLoading) {
+                        currentPage++;
+                        searchProducts(currentSearchTerm, currentPage, true);
+                    }
+                });
+
+                // Clear all selections
+                $('#clear-all-selections').on('click', function() {
+                    if (confirm('<?php esc_attr_e("Are you sure you want to remove all products from this category?", "swipecommerce-pro"); ?>')) {
+                        $('#category_products').val('');
+                        selectedProductsCache = {};
+                        updateSelectedCount();
+                        loadSelectedProductsPreview();
+                        refreshSearchResults();
+                    }
+                });
+
+                function loadInitialProducts() {
+                    searchProducts('', 1);
+                }
                 
-                function searchProducts(term, page = 1) {
-                    $('#search-results').html('<div class="search-loading"><p><?php esc_html_e("Searching...", "swipecommerce-pro"); ?></p></div>').show();
+                function searchProducts(term, page = 1, append = false) {
+                    if (isLoading) return;
+                    isLoading = true;
+                    
+                    if (!append) {
+                        $('#search-results').html('<div class="search-loading"><?php esc_html_e("Loading products...", "swipecommerce-pro"); ?></div>');
+                        $('#load-more-products').hide();
+                    } else {
+                        $('#load-more-btn').prop('disabled', true).text('<?php esc_html_e("Loading...", "swipecommerce-pro"); ?>');
+                    }
                     
                     $.ajax({
                         url: ajaxurl,
@@ -2357,249 +2431,597 @@ class SwipeCommercePro_Safe {
                         },
                         success: function(response) {
                             if (response.success) {
-                                displaySearchResults(response.data.products, response.data.has_more, response.data.total_found);
+                                displaySearchResults(response.data.products, response.data.has_more, append);
                             } else {
-                                $('#search-results').html('<div class="search-error"><p><?php esc_html_e("Search failed. Please try again.", "swipecommerce-pro"); ?></p></div>').show();
+                                if (!append) {
+                                    $('#search-results').html('<div class="search-error"><?php esc_html_e("Search failed. Please try again.", "swipecommerce-pro"); ?></div>');
+                                }
                             }
                         },
                         error: function() {
-                            $('#search-results').html('<div class="search-error"><p><?php esc_html_e("Search failed. Please try again.", "swipecommerce-pro"); ?></p></div>').show();
+                            if (!append) {
+                                $('#search-results').html('<div class="search-error"><?php esc_html_e("Search failed. Please try again.", "swipecommerce-pro"); ?></div>');
+                            }
+                        },
+                        complete: function() {
+                            isLoading = false;
+                            $('#load-more-btn').prop('disabled', false).text('<?php esc_html_e("Load More Products", "swipecommerce-pro"); ?>');
                         }
                     });
                 }
                 
-                function displaySearchResults(products, hasMore = false, totalFound = 0) {
-                    const resultsDiv = $('#search-results');
-                    const selectedProducts = $('#category_products').val().split(',').map(id => parseInt(id)).filter(id => id > 0);
+                function displaySearchResults(products, hasMore = false, append = false) {
+                    const selectedProducts = getSelectedProductIds();
                     
-                    if (products.length === 0) {
-                        resultsDiv.html(`
-                            <div class="search-no-results">
-                                <p><?php esc_html_e("No products found", "swipecommerce-pro"); ?></p>
-                                <small><?php esc_html_e("Try searching by product name, SKU, or description", "swipecommerce-pro"); ?></small>
+                    if (!append && products.length === 0) {
+                        $('#search-results').html(`
+                            <div class="no-products-found">
+                                <h4><?php esc_html_e("No products found", "swipecommerce-pro"); ?></h4>
+                                <p><?php esc_html_e("Try adjusting your search or browse all products.", "swipecommerce-pro"); ?></p>
                             </div>
-                        `).show();
+                        `);
                         return;
                     }
                     
-                    let html = '<div class="search-results-header">';
-                    html += `<p><strong>${totalFound}</strong> <?php esc_html_e("products found", "swipecommerce-pro"); ?></p>`;
-                    html += '</div>';
-                    
-                    html += '<div class="search-results-list">';
+                    let html = '';
                     products.forEach(product => {
                         const isSelected = selectedProducts.includes(product.id);
-                        const imageUrl = product.image && product.image !== '' ? product.image : '<?php echo wc_placeholder_img_src("thumbnail"); ?>';
-                        html += `
-                            <div class="search-result-item ${isSelected ? 'selected' : ''}" data-product-id="${product.id}">
-                                <img src="${imageUrl}" alt="" width="40" height="40" onerror="this.src='<?php echo wc_placeholder_img_src("thumbnail"); ?>'">
-                                <div class="product-info">
-                                    <strong>${product.name}</strong>
-                                    <span class="price">${product.price}</span>
-                                    <span class="sku"><?php esc_html_e("SKU:", "swipecommerce-pro"); ?> ${product.sku}</span>
-                                    <span class="type">${product.type}</span>
+                        selectedProductsCache[product.id] = product; // Cache for selected products display
+                        
+                        html += createProductCard(product, isSelected);
+                    });
+                    
+                    if (append) {
+                        $('#search-results .product-grid-container').append(html);
+                    } else {
+                        $('#search-results').html('<div class="product-grid-container">' + html + '</div>');
+                    }
+                    
+                    // Show/hide load more button
+                    if (hasMore) {
+                        $('#load-more-products').show();
+                    } else {
+                        $('#load-more-products').hide();
+                    }
+                }
+
+                function createProductCard(product, isSelected) {
+                    const imageUrl = product.image || '<?php echo wc_placeholder_img_src("thumbnail"); ?>';
+                    const buttonClass = isSelected ? 'selected' : 'available';
+                    const buttonText = isSelected ? '<?php esc_html_e("Selected", "swipecommerce-pro"); ?>' : '<?php esc_html_e("Select", "swipecommerce-pro"); ?>';
+                    
+                    return `
+                        <div class="product-card ${isSelected ? 'is-selected' : ''}" data-product-id="${product.id}">
+                            <div class="product-image">
+                                <img src="${imageUrl}" alt="${product.name}" onerror="this.src='<?php echo wc_placeholder_img_src("thumbnail"); ?>'">
+                                ${isSelected ? '<div class="selection-badge">✓</div>' : ''}
+                            </div>
+                            <div class="product-details">
+                                <h4 class="product-name">${product.name}</h4>
+                                <div class="product-meta">
+                                    <span class="product-price">${product.price}</span>
+                                    <span class="product-sku">SKU: ${product.sku}</span>
                                 </div>
-                                <button type="button" class="button button-small ${isSelected ? 'remove-product' : 'add-product'}">
-                                    ${isSelected ? '<?php esc_html_e("Remove", "swipecommerce-pro"); ?>' : '<?php esc_html_e("Add", "swipecommerce-pro"); ?>'}
+                                <button type="button" class="product-select-btn ${buttonClass}" data-product-id="${product.id}">
+                                    ${buttonText}
                                 </button>
                             </div>
-                        `;
+                        </div>
+                    `;
+                }
+                
+                // Handle product selection
+                $(document).on('click', '.product-select-btn', function(e) {
+                    e.preventDefault();
+                    const productId = parseInt($(this).data('product-id'));
+                    const productCard = $(this).closest('.product-card');
+                    const isCurrentlySelected = productCard.hasClass('is-selected');
+                    
+                    if (isCurrentlySelected) {
+                        removeProductFromSelection(productId, productCard);
+                    } else {
+                        addProductToSelection(productId, productCard);
+                    }
+                });
+
+                function addProductToSelection(productId, productCard) {
+                    let selectedProducts = getSelectedProductIds();
+                    if (!selectedProducts.includes(productId)) {
+                        selectedProducts.push(productId);
+                        updateSelectedProducts(selectedProducts);
+                        
+                        // Update UI
+                        updateProductCardState(productCard, true);
+                        loadSelectedProductsPreview();
+                        updateSelectedCount();
+                    }
+                }
+                
+                function removeProductFromSelection(productId, productCard) {
+                    let selectedProducts = getSelectedProductIds();
+                    selectedProducts = selectedProducts.filter(id => id !== productId);
+                    updateSelectedProducts(selectedProducts);
+                    
+                    // Update UI
+                    updateProductCardState(productCard, false);
+                    loadSelectedProductsPreview();
+                    updateSelectedCount();
+                }
+
+                function updateProductCardState(productCard, isSelected) {
+                    const btn = productCard.find('.product-select-btn');
+                    const badge = productCard.find('.selection-badge');
+                    
+                    if (isSelected) {
+                        productCard.addClass('is-selected');
+                        btn.removeClass('available').addClass('selected').text('<?php esc_html_e("Selected", "swipecommerce-pro"); ?>');
+                        if (badge.length === 0) {
+                            productCard.find('.product-image').append('<div class="selection-badge">✓</div>');
+                        }
+                    } else {
+                        productCard.removeClass('is-selected');
+                        btn.removeClass('selected').addClass('available').text('<?php esc_html_e("Select", "swipecommerce-pro"); ?>');
+                        badge.remove();
+                    }
+                }
+
+                function loadSelectedProductsPreview() {
+                    const selectedIds = getSelectedProductIds();
+                    const container = $('#selected-products-preview');
+                    
+                    if (selectedIds.length === 0) {
+                        container.html('<div class="no-products-message"><?php esc_html_e("No products selected. Search and click products to add them.", "swipecommerce-pro"); ?></div>');
+                        return;
+                    }
+                    
+                    let html = '<div class="selected-products-list">';
+                    selectedIds.forEach(productId => {
+                        const product = selectedProductsCache[productId];
+                        if (product) {
+                            html += createSelectedProductCard(product);
+                        }
                     });
                     html += '</div>';
                     
-                    if (hasMore) {
-                        html += '<div class="search-load-more"><p><em><?php esc_html_e("Showing first 50 results. Be more specific to find other products.", "swipecommerce-pro"); ?></em></p></div>';
-                    }
-                    
-                    resultsDiv.html(html).show();
+                    container.html(html);
                 }
-                
-                // Handle add/remove product buttons
-                $(document).on('click', '.add-product, .remove-product', function() {
-                    const productId = parseInt($(this).closest('.search-result-item').data('product-id'));
-                    const isAdding = $(this).hasClass('add-product');
-                    
-                    if (isAdding) {
-                        addProductToCategory(productId);
-                    } else {
-                        removeProductFromCategory(productId);
-                    }
-                    
-                    // Update button state
-                    $(this).removeClass('add-product remove-product')
-                           .addClass(isAdding ? 'remove-product' : 'add-product')
-                           .text(isAdding ? '<?php esc_html_e("Remove", "swipecommerce-pro"); ?>' : '<?php esc_html_e("Add", "swipecommerce-pro"); ?>');
-                    
-                    $(this).closest('.search-result-item').toggleClass('selected');
+
+                function createSelectedProductCard(product) {
+                    const imageUrl = product.image || '<?php echo wc_placeholder_img_src("thumbnail"); ?>';
+                    return `
+                        <div class="selected-product-item" data-product-id="${product.id}">
+                            <img src="${imageUrl}" alt="${product.name}" class="selected-product-image">
+                            <div class="selected-product-info">
+                                <span class="selected-product-name">${product.name}</span>
+                                <span class="selected-product-price">${product.price}</span>
+                            </div>
+                            <button type="button" class="remove-selected-product" data-product-id="${product.id}" title="<?php esc_attr_e("Remove from category", "swipecommerce-pro"); ?>">
+                                ✕
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Handle removal from selected products preview
+                $(document).on('click', '.remove-selected-product', function(e) {
+                    e.preventDefault();
+                    const productId = parseInt($(this).data('product-id'));
+                    const productCard = $(`.product-card[data-product-id="${productId}"]`);
+                    removeProductFromSelection(productId, productCard);
                 });
-                
-                function addProductToCategory(productId) {
-                    let selectedProducts = $('#category_products').val().split(',').map(id => parseInt(id)).filter(id => id > 0);
-                    if (!selectedProducts.includes(productId)) {
-                        selectedProducts.push(productId);
-                        $('#category_products').val(selectedProducts.join(','));
-                        loadSelectedProducts();
-                    }
+
+                function getSelectedProductIds() {
+                    const value = $('#category_products').val();
+                    return value ? value.split(',').map(id => parseInt(id)).filter(id => id > 0) : [];
                 }
                 
-                function removeProductFromCategory(productId) {
-                    let selectedProducts = $('#category_products').val().split(',').map(id => parseInt(id)).filter(id => id > 0);
-                    selectedProducts = selectedProducts.filter(id => id !== productId);
-                    $('#category_products').val(selectedProducts.join(','));
-                    loadSelectedProducts();
+                function updateSelectedProducts(productIds) {
+                    $('#category_products').val(productIds.join(','));
                 }
                 
-                function loadSelectedProducts() {
-                    const productIds = $('#category_products').val();
-                    if (!productIds) {
-                        $('#selected-products').html('<p><?php esc_html_e("No products assigned to this category yet.", "swipecommerce-pro"); ?></p>');
-                        return;
-                    }
-                    
-                    // For now, just show the count - we could enhance this to show actual product details
-                    const ids = productIds.split(',').filter(id => id);
-                    $('#selected-products').html(`<p><strong>${ids.length}</strong> <?php esc_html_e("products assigned", "swipecommerce-pro"); ?></p>`);
+                function updateSelectedCount() {
+                    const count = getSelectedProductIds().length;
+                    $('#selected-count').text(`(${count})`);
+                }
+
+                function refreshSearchResults() {
+                    searchProducts(currentSearchTerm, 1);
                 }
                 
-                // Hide search results when clicking outside
-                $(document).click(function(e) {
-                    if (!$(e.target).closest('#assigned-products').length) {
-                        $('#search-results').hide();
-                    }
-                });
+                // Initialize selected count
+                updateSelectedCount();
             });
         </script>
         
         <style>
-            .search-results-list {
+            /* Enhanced Product Selector Styles */
+            .product-selector-container {
                 border: 1px solid #ddd;
+                border-radius: 8px;
+                background: #fafafa;
+                overflow: hidden;
+                margin-top: 10px;
+            }
+
+            .product-search-section {
                 background: white;
-                max-height: 400px;
-                overflow-y: auto;
-                border-radius: 4px;
-            }
-            
-            .search-results-header {
-                padding: 10px;
-                background: #f8f9fa;
                 border-bottom: 1px solid #ddd;
-                font-size: 13px;
             }
-            
-            .search-loading {
+
+            .search-header {
                 padding: 20px;
-                text-align: center;
-                color: #666;
-                font-style: italic;
-            }
-            
-            .search-error {
-                padding: 15px;
-                background: #ffe6e6;
-                color: #d63638;
-                border-radius: 4px;
-            }
-            
-            .search-no-results {
-                padding: 20px;
-                text-align: center;
-                color: #666;
-            }
-            
-            .search-no-results small {
-                display: block;
-                margin-top: 5px;
-                color: #999;
-            }
-            
-            .search-result-item {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
                 display: flex;
+                justify-content: space-between;
                 align-items: center;
-                padding: 12px;
-                border-bottom: 1px solid #eee;
-                gap: 12px;
-                transition: background-color 0.2s;
+                flex-wrap: wrap;
+                gap: 15px;
             }
-            
-            .search-result-item:hover {
-                background: #f8f9fa;
-            }
-            
-            .search-result-item.selected {
-                background: #e8f4fd;
-                border-left: 3px solid #0073aa;
-            }
-            
-            .search-result-item img {
-                border-radius: 4px;
-                border: 1px solid #ddd;
-                flex-shrink: 0;
-            }
-            
-            .product-info {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-            }
-            
-            .product-info strong {
-                font-size: 14px;
-                line-height: 1.3;
-                color: #23282d;
-            }
-            
-            .product-info .price {
-                color: #0073aa;
-                font-size: 12px;
+
+            .search-header h4 {
+                margin: 0;
+                font-size: 16px;
                 font-weight: 600;
             }
-            
-            .product-info .sku {
-                color: #666;
-                font-size: 11px;
+
+            .search-controls {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: wrap;
             }
-            
-            .product-info .type {
-                color: #999;
-                font-size: 10px;
-                text-transform: uppercase;
-                background: #f0f0f0;
-                padding: 2px 6px;
-                border-radius: 10px;
-                display: inline-block;
-                width: fit-content;
+
+            .search-controls input {
+                background: rgba(255,255,255,0.9);
+                border: 1px solid rgba(255,255,255,0.3);
+                border-radius: 6px;
+                padding: 8px 12px;
+                min-width: 250px;
+                font-size: 14px;
             }
-            
-            .search-load-more {
+
+            .search-controls input:focus {
+                background: white;
+                border-color: #2271b1;
+                outline: none;
+                box-shadow: 0 0 0 1px #2271b1;
+            }
+
+            .search-controls button {
+                background: rgba(255,255,255,0.2);
+                border: 1px solid rgba(255,255,255,0.3);
+                color: white;
+                border-radius: 6px;
+                padding: 8px 16px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .search-controls button:hover {
+                background: rgba(255,255,255,0.3);
+            }
+
+            /* Product Grid */
+            .product-grid {
+                padding: 20px;
+                min-height: 300px;
+                max-height: 500px;
+                overflow-y: auto;
+            }
+
+            .product-grid-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+            }
+
+            .product-card {
+                background: white;
+                border: 2px solid #e1e5e9;
+                border-radius: 8px;
+                overflow: hidden;
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+
+            .product-card:hover {
+                border-color: #2271b1;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+
+            .product-card.is-selected {
+                border-color: #00a32a;
+                background: #f6ffed;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,163,42,0.15);
+            }
+
+            .product-image {
+                position: relative;
+                height: 120px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f8f9fa;
+                overflow: hidden;
+            }
+
+            .product-image img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: cover;
+            }
+
+            .selection-badge {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: #00a32a;
+                color: white;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                font-weight: bold;
+            }
+
+            .product-details {
                 padding: 15px;
+            }
+
+            .product-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: #1e293b;
+                margin: 0 0 8px 0;
+                line-height: 1.3;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            .product-meta {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                margin-bottom: 12px;
+            }
+
+            .product-price {
+                font-weight: 600;
+                color: #2271b1;
+                font-size: 14px;
+            }
+
+            .product-sku {
+                font-size: 12px;
+                color: #64748b;
+            }
+
+            .product-select-btn {
+                width: 100%;
+                padding: 8px 16px;
+                border-radius: 6px;
+                border: none;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .product-select-btn.available {
+                background: #2271b1;
+                color: white;
+            }
+
+            .product-select-btn.available:hover {
+                background: #135e96;
+                transform: translateY(-1px);
+            }
+
+            .product-select-btn.selected {
+                background: #00a32a;
+                color: white;
+            }
+
+            .product-select-btn.selected:hover {
+                background: #008a2e;
+            }
+
+            /* Selected Products Section */
+            .selected-products-section {
                 background: #f8f9fa;
                 border-top: 1px solid #ddd;
-                text-align: center;
-                font-style: italic;
-                color: #666;
             }
-            
-            .selected-products {
-                margin-top: 15px;
-                padding: 15px;
-                background: #f9f9f9;
-                border-radius: 4px;
-                border-left: 4px solid #0073aa;
+
+            .selected-header {
+                padding: 15px 20px;
+                background: #e8f4fd;
+                border-bottom: 1px solid #c3e6fc;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
             }
-            
-            #product-search {
+
+            .selected-header h4 {
+                margin: 0;
+                font-size: 14px;
+                color: #0c4a6e;
+                font-weight: 600;
+            }
+
+            .selected-products-grid {
+                padding: 20px;
+                min-height: 150px;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+
+            .selected-products-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 12px;
+            }
+
+            .selected-product-item {
+                background: white;
+                border: 1px solid #e1e5e9;
+                border-radius: 6px;
+                padding: 12px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
                 position: relative;
+                transition: all 0.2s;
             }
-            
-            #search-results {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                z-index: 1000;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                margin-top: 2px;
+
+            .selected-product-item:hover {
+                border-color: #2271b1;
+                transform: translateY(-1px);
+            }
+
+            .selected-product-image {
+                width: 40px;
+                height: 40px;
+                object-fit: cover;
+                border-radius: 4px;
+                background: #f8f9fa;
+            }
+
+            .selected-product-info {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .selected-product-name {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                color: #1e293b;
+                margin-bottom: 2px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .selected-product-price {
+                font-size: 12px;
+                color: #2271b1;
+                font-weight: 500;
+            }
+
+            .remove-selected-product {
+                background: #f87171;
+                color: white;
+                border: none;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                font-size: 12px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+                flex-shrink: 0;
+            }
+
+            .remove-selected-product:hover {
+                background: #dc2626;
+                transform: scale(1.1);
+            }
+
+            .no-products-message {
+                text-align: center;
+                color: #64748b;
+                font-style: italic;
+                padding: 30px 20px;
+            }
+
+            .no-products-found {
+                text-align: center;
+                padding: 40px 20px;
+                color: #64748b;
+            }
+
+            .no-products-found h4 {
+                margin: 0 0 10px 0;
+                color: #374151;
+            }
+
+            .search-loading {
+                text-align: center;
+                padding: 40px 20px;
+                color: #64748b;
+                font-style: italic;
+            }
+
+            .search-error {
+                background: #fef2f2;
+                border: 1px solid #fecaca;
+                color: #dc2626;
+                padding: 15px;
+                border-radius: 6px;
+                margin: 20px;
+                text-align: center;
+            }
+
+            #load-more-products {
+                padding: 20px;
+                text-align: center;
+                border-top: 1px solid #e1e5e9;
+                background: #fafafa;
+            }
+
+            #load-more-btn {
+                background: #f3f4f6;
+                border: 1px solid #d1d5db;
+                color: #374151;
+                padding: 8px 20px;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            #load-more-btn:hover {
+                background: #e5e7eb;
+                border-color: #9ca3af;
+            }
+
+            #load-more-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            /* Responsive Design */
+            @media (max-width: 768px) {
+                .search-header {
+                    flex-direction: column;
+                    text-align: center;
+                }
+
+                .search-controls {
+                    justify-content: center;
+                    width: 100%;
+                }
+
+                .search-controls input {
+                    min-width: 200px;
+                }
+
+                .product-grid-container {
+                    grid-template-columns: 1fr;
+                }
+
+                .selected-products-list {
+                    grid-template-columns: 1fr;
+                }
             }
         </style>
         <?php

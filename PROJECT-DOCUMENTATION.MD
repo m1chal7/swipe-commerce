@@ -3,7 +3,7 @@
 ## Overview
 SwipeCommerce Pro is a premium WordPress/WooCommerce plugin that transforms product browsing with Netflix-style horizontal sliders. The plugin provides an enhanced shopping experience through smooth animations, category-based organization, and modern UI design.
 
-**Version:** 1.1.0  
+**Version:** 1.1.3  
 **WordPress Compatibility:** 5.0+  
 **WooCommerce Compatibility:** 5.0+  
 **PHP Requirements:** 7.4+
@@ -322,7 +322,35 @@ define('WP_DEBUG_LOG', true);
 
 ## Version History
 
-### 1.1.0 (Current)
+### 1.1.3 (Current)
+- **CRITICAL BUG FIX**: Fixed category position reset on ANY update (comprehensive fix)
+- **Issue**: Every time "Update Category" was clicked, category jumped to first position
+- **Root Cause Analysis**: 
+  - Categories are sorted by `order` field in `get_custom_categories()` (line 48)
+  - Both save paths defaulted order to `1` when form didn't send `category_order` field
+  - Form template shows order but doesn't include it in submission
+- **Solution**: Modified both save handlers to preserve existing category order when editing:
+  - Admin form handler: `class-swipecommerce-admin.php:193`
+  - AJAX handler: `class-swipecommerce-ajax.php:130`
+- **Impact**: Categories now maintain their position during any update operation
+
+### 1.1.2
+- **CRITICAL BUG FIX**: Fixed category position reset when updating product order
+- **Issue**: When editing category products, category order defaulted to 1 if not explicitly sent in request
+- **Root Cause**: AJAX handler was using `$_POST['order'] ?? 1` instead of preserving existing category order
+- **Solution**: Modified AJAX handler to preserve existing category order when editing
+- **Impact**: Categories now maintain their position when product order is updated
+- **Fixed in**: `class-swipecommerce-ajax.php:130`
+
+### 1.1.1
+- **CRITICAL BUG FIX**: Fixed category reordering issue after product updates
+- **Issue**: After reordering products within a category and saving, the category would move to first position in the category list
+- **Root Cause**: AJAX handler was missing `_editing` flag detection, causing validation to fail and categories to be treated as new
+- **Solution**: Added proper edit detection logic to AJAX handler matching the admin form handler
+- **Impact**: Category order now remains stable when updating product order within categories
+- **Fixed in**: `class-swipecommerce-ajax.php:120-137`
+
+### 1.1.0
 - **CRITICAL BUG FIX**: Fixed product ordering not persisting after save
 - **Issue**: Validation was failing with "duplicate ID" error when editing existing categories
 - **Root Cause**: Missing `_editing` flag in validation for edit operations

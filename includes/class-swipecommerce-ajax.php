@@ -117,16 +117,25 @@ class SwipeCommerce_Ajax {
             return;
         }
         
+        $category_id = sanitize_key($_POST['id'] ?? '');
+        $existing_category = $this->categories->get_custom_category($category_id);
+        $is_editing = !empty($category_id) && $existing_category;
+        
         $category_data = array(
-            'id' => sanitize_key($_POST['id'] ?? ''),
+            'id' => $category_id,
             'name' => sanitize_text_field($_POST['name'] ?? ''),
             'description' => sanitize_textarea_field($_POST['description'] ?? ''),
             'color_scheme' => sanitize_text_field($_POST['color_scheme'] ?? 'gradient-pink'),
             'icon' => wp_kses($_POST['icon'] ?? '🏆', array()),
-            'order' => intval($_POST['order'] ?? 1),
+            'order' => $is_editing ? $existing_category['order'] : intval($_POST['order'] ?? 1),
             'products' => array_filter(array_map('intval', explode(',', $_POST['products'] ?? ''))),
             'visibility' => isset($_POST['visibility']) ? !empty($_POST['visibility']) : true
         );
+        
+        // Set editing flag to avoid duplicate ID validation error
+        if ($is_editing) {
+            $category_data['_editing'] = true;
+        }
         
         // Generate ID if new category
         if (empty($category_data['id'])) {

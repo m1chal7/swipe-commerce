@@ -181,7 +181,8 @@ class SwipeCommerce_Admin {
         $products_array = array_filter(array_map('intval', explode(',', $received_products_string)));
         
         $category_id = sanitize_key($_POST['category_id'] ?? '');
-        $is_editing = !empty($category_id) && $this->categories->get_custom_category($category_id);
+        $existing_category = $this->categories->get_custom_category($category_id);
+        $is_editing = !empty($category_id) && $existing_category;
         
         $category_data = array(
             'id' => $category_id,
@@ -189,7 +190,7 @@ class SwipeCommerce_Admin {
             'description' => sanitize_textarea_field($_POST['category_description'] ?? ''),
             'color_scheme' => sanitize_text_field($_POST['color_scheme'] ?? 'gradient-pink'),
             'icon' => wp_kses($_POST['category_icon'] ?? '🏆', array()),
-            'order' => intval($_POST['category_order'] ?? 1),
+            'order' => $is_editing ? $existing_category['order'] : intval($_POST['category_order'] ?? 1),
             'products' => $products_array,
             'visibility' => !empty($_POST['category_visibility'])
         );

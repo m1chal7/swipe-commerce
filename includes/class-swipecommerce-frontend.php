@@ -495,32 +495,20 @@ class SwipeCommerce_Frontend {
                     </a>
                 </div>
                 
-                <?php if ($product->get_average_rating() > 0): ?>
-                <div class="swipecommerce-product-rating">
-                    <span class="swipecommerce-stars">
-                        <?php echo str_repeat('★', floor($product->get_average_rating())); ?>
-                        <?php echo str_repeat('☆', 5 - floor($product->get_average_rating())); ?>
-                    </span>
-                    <span class="swipecommerce-rating-count">(<?php echo $product->get_review_count(); ?>)</span>
+                <?php 
+                // Get product description using get_the_excerpt()
+                $post_id = $product->get_id();
+                $excerpt = get_the_excerpt($post_id);
+                if (empty($excerpt)) {
+                    // Fallback to short description if no excerpt
+                    $excerpt = $product->get_short_description();
+                }
+                if (!empty($excerpt)): 
+                ?>
+                <div class="swipecommerce-product-description">
+                    <?php echo wp_trim_words(wp_strip_all_tags($excerpt), 15, '...'); ?>
                 </div>
                 <?php endif; ?>
-                
-                <div class="swipecommerce-product-price">
-                    <span class="swipecommerce-price-current"><?php echo $product->get_price_html(); ?></span>
-                </div>
-                
-                <div class="swipecommerce-quick-add">
-                    <div class="swipecommerce-quantity-selector">
-                        <button class="swipecommerce-qty-btn swipecommerce-minus" type="button">−</button>
-                        <input type="number" class="swipecommerce-qty-input" value="1" min="1" max="10" readonly>
-                        <button class="swipecommerce-qty-btn swipecommerce-plus" type="button">+</button>
-                    </div>
-                    <button class="swipecommerce-add-btn" 
-                            data-product-id="<?php echo esc_attr($product->get_id()); ?>"
-                            data-add-to-cart-url="<?php echo esc_url($product->add_to_cart_url()); ?>">
-                        <?php esc_html_e('Add', 'swipecommerce-pro'); ?>
-                    </button>
-                </div>
             </div>
         </div>
         <?php

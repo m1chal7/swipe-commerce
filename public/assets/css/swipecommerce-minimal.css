@@ -679,52 +679,244 @@ body {
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-    .swipecommerce-product-card {
-        width: 160px;
-    }
-    
-    .swipecommerce-product-image {
-        height: 160px;
-    }
-    
+    /* Optimize main container spacing */
     .swipecommerce-slider-wrapper {
-        margin: 10px;
-        padding: 15px;
+        margin: 5px;
+        padding: 8px 0;
+        border-radius: 12px;
     }
     
+    /* Compact category navigator */
     .swipecommerce-category-navigator {
-        padding: 10px 20px;
+        padding: 8px 12px;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
     }
     
+    /* Optimize navigation pills */
     .swipecommerce-nav-pills {
-        justify-content: center;
+        justify-content: flex-start;
+        gap: 6px;
     }
     
+    .swipecommerce-nav-pill {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 15px;
+    }
+    
+    /* Compact quick filters */
     .swipecommerce-quick-filters {
-        justify-content: center;
+        justify-content: flex-start;
+        gap: 6px;
     }
     
+    .swipecommerce-filter-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+        border-radius: 12px;
+    }
+    
+    /* Optimize slider header */
     .swipecommerce-slider-header {
-        padding: 15px 20px;
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        border-bottom-width: 1px;
     }
     
     .swipecommerce-slider-header h2 {
-        font-size: 22px;
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .swipecommerce-slider-header p {
+        font-size: 14px;
+    }
+    
+    /* Optimize slider container */
+    .swipecommerce-slider-container {
+        padding: 0 20px;
+    }
+    
+    /* Compact category headers */
+    .swipecommerce-category-header {
+        padding: 8px 15px;
+        margin-bottom: 12px;
+        font-size: 14px;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .swipecommerce-category-meta {
+        font-size: 10px;
+    }
+    
+    /* Optimize slider track spacing */
+    .swipecommerce-slider-track {
+        gap: 15px;
+        padding: 8px 0 20px;
+    }
+    
+    /* Compact product cards */
+    .swipecommerce-product-card {
+        width: 140px;
+        border-radius: 12px;
+    }
+    
+    .swipecommerce-product-image {
+        height: 140px;
+        font-size: 36px;
+    }
+    
+    .swipecommerce-product-info {
+        padding: 12px;
+    }
+    
+    .swipecommerce-product-name {
+        font-size: 13px;
+        margin-bottom: 6px;
+        min-height: 36px;
+        line-height: 1.3;
+    }
+    
+    .swipecommerce-product-rating {
+        margin-bottom: 6px;
+    }
+    
+    .swipecommerce-stars {
+        font-size: 12px;
+    }
+    
+    .swipecommerce-rating-count {
+        font-size: 10px;
+    }
+    
+    .swipecommerce-product-price {
+        margin-bottom: 10px;
+    }
+    
+    .swipecommerce-price-current {
+        font-size: 16px;
+    }
+    
+    .swipecommerce-price-original {
+        font-size: 12px;
+    }
+    
+    /* Compact add to cart controls */
+    .swipecommerce-quick-add {
+        gap: 6px;
+    }
+    
+    .swipecommerce-quantity-selector {
+        border-radius: 6px;
+    }
+    
+    .swipecommerce-qty-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+    
+    .swipecommerce-qty-input {
+        width: 28px;
+        height: 24px;
+        font-size: 12px;
+    }
+    
+    .swipecommerce-add-btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+    }
+    
+    /* Optimize navigation buttons */
+    .swipecommerce-nav-button {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .swipecommerce-nav-button.swipecommerce-prev { left: 5px; }
+    .swipecommerce-nav-button.swipecommerce-next { right: 5px; }
+    
+    .swipecommerce-nav-button svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    /* Optimize badges */
+    .swipecommerce-product-badge {
+        padding: 2px 6px;
+        font-size: 9px;
+        border-radius: 12px;
+    }
+    
+    .swipecommerce-social-proof {
+        padding: 2px 6px;
+        font-size: 9px;
+        border-radius: 8px;
+    }
+}
+
+/* Extra mobile optimizations for smaller screens */
+@media (max-width: 480px) {
+    .swipecommerce-slider-wrapper {
+        margin: 2px;
+        padding: 5px 0;
+    }
+    
+    .swipecommerce-category-navigator {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+    
+    .swipecommerce-slider-header {
+        padding: 10px 12px;
+        margin-bottom: 10px;
+    }
+    
+    .swipecommerce-slider-header h2 {
+        font-size: 18px;
     }
     
     .swipecommerce-slider-container {
-        padding: 0 40px;
+        padding: 0 15px;
+    }
+    
+    .swipecommerce-category-header {
+        padding: 6px 12px;
+        margin-bottom: 10px;
+        font-size: 13px;
+    }
+    
+    .swipecommerce-slider-track {
+        gap: 12px;
+        padding: 5px 0 15px;
+    }
+    
+    .swipecommerce-product-card {
+        width: 130px;
+    }
+    
+    .swipecommerce-product-image {
+        height: 130px;
+    }
+    
+    .swipecommerce-product-info {
+        padding: 10px;
+    }
+    
+    .swipecommerce-product-name {
+        font-size: 12px;
+        min-height: 32px;
     }
     
     .swipecommerce-nav-button {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
     }
     
     .swipecommerce-nav-button svg {
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
     }
 }

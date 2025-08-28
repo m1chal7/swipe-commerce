@@ -3,7 +3,7 @@
 ## Overview
 SwipeCommerce Pro is a premium WordPress/WooCommerce plugin that transforms product browsing with Netflix-style horizontal sliders. The plugin provides an enhanced shopping experience through smooth animations, category-based organization, and modern UI design.
 
-**Version:** 1.1.3  
+**Version:** 1.1.4  
 **WordPress Compatibility:** 5.0+  
 **WooCommerce Compatibility:** 5.0+  
 **PHP Requirements:** 7.4+
@@ -322,7 +322,19 @@ define('WP_DEBUG_LOG', true);
 
 ## Version History
 
-### 1.1.3 (Current)
+### 1.1.4 (Current)
+- **MOBILE UI/UX OPTIMIZATION**: Comprehensive mobile interface optimization
+- **Issue**: Mobile interface was wasting significant screen space with excessive padding, large font sizes, and oversized elements
+- **Improvements**: 
+  - Reduced main container padding from 15px to 8px (mobile) and 5px (small mobile)
+  - Optimized product card dimensions from 160px to 140px width (130px on small mobile)
+  - Compressed typography sizes throughout the interface
+  - Tightened gaps between elements for better space utilization
+  - Enhanced navigation elements with more compact sizing
+  - Added responsive breakpoint for screens under 480px
+- **Impact**: Significantly improved mobile user experience with better space utilization and more products visible horizontally
+
+### 1.1.3
 - **CRITICAL BUG FIX**: Fixed category position reset on ANY update (comprehensive fix)
 - **Issue**: Every time "Update Category" was clicked, category jumped to first position
 - **Root Cause Analysis**: 

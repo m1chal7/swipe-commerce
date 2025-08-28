@@ -3,7 +3,7 @@
  * Plugin Name: SwipeCommerce - Horizontal Product Showcase
  * Plugin URI: https://swipecommerce.com
  * Description: Premium WooCommerce plugin that transforms product browsing with Netflix-style horizontal sliders
- * Version: 1.1.8
+ * Version: 1.2.1  
  * Author: Michał Urbaniak
  * Text Domain: swipecommerce-pro
  * Requires at least: 5.0
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 
 // Define plugin constants
 if (!defined('SWIPECOMMERCE_VERSION')) {
-    define('SWIPECOMMERCE_VERSION', '1.1.8');
+    define('SWIPECOMMERCE_VERSION', '1.2.1');
 }
 if (!defined('SWIPECOMMERCE_PLUGIN_FILE')) {
     define('SWIPECOMMERCE_PLUGIN_FILE', __FILE__);

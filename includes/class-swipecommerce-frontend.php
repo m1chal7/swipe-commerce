@@ -170,9 +170,22 @@ class SwipeCommerce_Frontend {
                             <?php endforeach; ?>
                         </div>
                     </div>
+
+
+                       
                 </div>
+
+                <!-- Shop Button -->
+                <div class="swipecommerce-shop-button-container swipe-test-class">
+                                <a href="/sklep" class="swipecommerce-shop-button">
+                            PRZEJDŹ DO SKLEPU
+                                </a>
+                        </div>
+          
             </div>
         </div>
+        
+       
         <?php
         return ob_get_clean();
     }
@@ -242,6 +255,13 @@ class SwipeCommerce_Frontend {
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Shop Button -->
+        <div class="swipecommerce-shop-button-container">
+            <a href="/sklep" class="swipecommerce-shop-button">
+                PRZEJDŹ DO SKLEPU
+            </a>
         </div>
         <?php
         return ob_get_clean();
@@ -343,6 +363,13 @@ class SwipeCommerce_Frontend {
                 </div>
             </div>
         </div>
+        
+        <!-- Shop Button -->
+        <div class="swipecommerce-shop-button-container">
+            <a href="/sklep" class="swipecommerce-shop-button">
+                PRZEJDŹ DO SKLEPU
+            </a>
+        </div>
         <?php
         return ob_get_clean();
     }
@@ -428,6 +455,13 @@ class SwipeCommerce_Frontend {
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Shop Button -->
+        <div class="swipecommerce-shop-button-container">
+            <a href="/sklep" class="swipecommerce-shop-button">
+                PRZEJDŹ DO SKLEPU
+            </a>
         </div>
         <?php
         return ob_get_clean();

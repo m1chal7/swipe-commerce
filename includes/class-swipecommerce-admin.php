@@ -68,8 +68,8 @@ class SwipeCommerce_Admin {
         
         // Main menu page
         add_menu_page(
-            __('SwipeCommerce Pro', 'swipecommerce-pro'),
-            __('SwipeCommerce Pro', 'swipecommerce-pro'),
+            __('SwipeCommerce', 'swipecommerce-pro'),
+            __('SwipeCommerce', 'swipecommerce-pro'),
             $capability,
             'swipecommerce-pro',
             array($this, 'admin_page'),
@@ -177,16 +177,27 @@ class SwipeCommerce_Admin {
      * @since    1.0.7
      */
     private function handle_save_category_form() {
+        $received_products_string = $_POST['category_products'] ?? '';
+        $products_array = array_filter(array_map('intval', explode(',', $received_products_string)));
+        
+        $category_id = sanitize_key($_POST['category_id'] ?? '');
+        $is_editing = !empty($category_id) && $this->categories->get_custom_category($category_id);
+        
         $category_data = array(
-            'id' => sanitize_key($_POST['category_id'] ?? ''),
+            'id' => $category_id,
             'name' => sanitize_text_field($_POST['category_name'] ?? ''),
             'description' => sanitize_textarea_field($_POST['category_description'] ?? ''),
             'color_scheme' => sanitize_text_field($_POST['color_scheme'] ?? 'gradient-pink'),
             'icon' => wp_kses($_POST['category_icon'] ?? '🏆', array()),
             'order' => intval($_POST['category_order'] ?? 1),
-            'products' => array_filter(array_map('intval', explode(',', $_POST['category_products'] ?? ''))),
+            'products' => $products_array,
             'visibility' => !empty($_POST['category_visibility'])
         );
+        
+        // Set editing flag to avoid duplicate ID validation error
+        if ($is_editing) {
+            $category_data['_editing'] = true;
+        }
         
         // Generate ID if new category
         if (empty($category_data['id'])) {

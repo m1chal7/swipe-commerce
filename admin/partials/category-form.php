@@ -148,4 +148,5 @@ jQuery(document).ready(function($) {
         $('.color-scheme-preview').attr('class', 'color-scheme-preview ' + $(this).val());
     });
 });
+
 </script>

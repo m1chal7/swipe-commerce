@@ -56,6 +56,7 @@ class SwipeCommerce_Ajax {
             add_action('wp_ajax_swipecommerce_search_products', array($this, 'ajax_search_products'));
             add_action('wp_ajax_swipecommerce_bulk_category_action', array($this, 'ajax_bulk_category_action'));
             add_action('wp_ajax_swipecommerce_toggle_category_visibility', array($this, 'ajax_toggle_category_visibility'));
+            add_action('wp_ajax_swipecommerce_get_product_data', array($this, 'ajax_get_product_data'));
         }
     }
 
@@ -370,4 +371,45 @@ class SwipeCommerce_Ajax {
             'data' => $data
         ));
     }
+
+    /**
+     * AJAX handler for getting individual product data.
+     *
+     * @since    1.0.8
+     */
+    public function ajax_get_product_data() {
+        // Security check
+        check_ajax_referer('swipecommerce_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_woocommerce') && !current_user_can('manage_options')) {
+            wp_send_json_error(__('Insufficient permissions', 'swipecommerce-pro'));
+            return;
+        }
+        
+        $product_id = intval($_POST['product_id'] ?? 0);
+        
+        if ($product_id <= 0) {
+            wp_send_json_error(__('Invalid product ID', 'swipecommerce-pro'));
+            return;
+        }
+        
+        try {
+            $product = wc_get_product($product_id);
+            
+            if (!$product) {
+                wp_send_json_error(__('Product not found', 'swipecommerce-pro'));
+                return;
+            }
+            
+            // Format product data using the same method as search
+            $product_data = $this->categories->format_product_for_search($product);
+            
+            wp_send_json_success($product_data);
+            
+        } catch (Exception $e) {
+            error_log('SwipeCommerce get_product_data error: ' . $e->getMessage());
+            wp_send_json_error(__('Failed to load product data', 'swipecommerce-pro'));
+        }
+    }
+
 }

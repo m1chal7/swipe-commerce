@@ -236,6 +236,18 @@ if (!defined('ABSPATH')) {
     font-weight: 600;
 }
 
+.selected-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.drag-instructions {
+    font-size: 12px;
+    color: #64748b;
+    font-style: italic;
+}
+
 .selected-products-grid {
     padding: 20px;
     min-height: 150px;
@@ -244,26 +256,79 @@ if (!defined('ABSPATH')) {
 }
 
 .selected-products-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* When sortable is enabled, adjust layout */
+.selected-products-grid.has-products .selected-products-list {
+    padding: 5px;
 }
 
 .selected-product-item {
     background: white;
     border: 1px solid #e1e5e9;
     border-radius: 6px;
-    padding: 12px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     position: relative;
     transition: all 0.2s;
+    cursor: move;
 }
 
 .selected-product-item:hover {
     border-color: #2271b1;
     transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.selected-product-item.dragging {
+    opacity: 0.8;
+    transform: rotate(2deg);
+    z-index: 1000;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+/* Drag handle */
+.drag-handle {
+    color: #9ca3af;
+    cursor: move;
+    padding: 2px;
+    transition: color 0.2s;
+    flex-shrink: 0;
+}
+
+.drag-handle:hover {
+    color: #6b7280;
+}
+
+.drag-handle .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Sortable placeholder */
+.selected-product-placeholder {
+    background: #f3f4f6;
+    border: 2px dashed #d1d5db;
+    border-radius: 6px;
+    height: 60px;
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-style: italic;
+    position: relative;
+}
+
+.selected-product-placeholder:before {
+    content: "Drop here";
+    font-size: 12px;
 }
 
 .selected-product-image {
@@ -399,8 +464,14 @@ if (!defined('ABSPATH')) {
         grid-template-columns: 1fr;
     }
 
-    .selected-products-list {
-        grid-template-columns: 1fr;
+    .drag-instructions {
+        display: none;
+    }
+    
+    .selected-controls {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-end;
     }
 }
 </style>

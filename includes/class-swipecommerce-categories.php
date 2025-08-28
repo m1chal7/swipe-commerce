@@ -151,7 +151,25 @@ class SwipeCommerce_Categories {
                 'limit' => $limit,
             );
             
-            return wc_get_products($args);
+            $products = wc_get_products($args);
+            
+            // Maintain the custom order by reordering products according to the saved sequence
+            $ordered_products = array();
+            $products_by_id = array();
+            
+            // Create a lookup array of products by ID
+            foreach ($products as $product) {
+                $products_by_id[$product->get_id()] = $product;
+            }
+            
+            // Add products in the exact order they appear in the category
+            foreach ($product_ids as $product_id) {
+                if (isset($products_by_id[$product_id])) {
+                    $ordered_products[] = $products_by_id[$product_id];
+                }
+            }
+            
+            return $ordered_products;
         } catch (Exception $e) {
             error_log('SwipeCommerce get_products_by_custom_category error: ' . $e->getMessage());
             return array();
@@ -312,7 +330,7 @@ class SwipeCommerce_Categories {
      * @param    WC_Product    $product    The WooCommerce product object.
      * @return   array                     Formatted product data.
      */
-    private function format_product_for_search($product) {
+    public function format_product_for_search($product) {
         return array(
             'id' => $product->get_id(),
             'name' => $product->get_name(),

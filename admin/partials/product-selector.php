@@ -42,10 +42,13 @@ if (!defined('ABSPATH')) {
         <div class="selected-products-section">
             <div class="selected-header">
                 <h4><?php esc_html_e('Selected Products', 'swipecommerce-pro'); ?> <span id="selected-count">0</span></h4>
-                <button type="button" class="button" id="clear-all-selections"><?php esc_html_e('Clear All', 'swipecommerce-pro'); ?></button>
+                <div class="selected-controls">
+                    <span class="drag-instructions"><?php esc_html_e('Drag to reorder', 'swipecommerce-pro'); ?></span>
+                    <button type="button" class="button" id="clear-all-selections"><?php esc_html_e('Clear All', 'swipecommerce-pro'); ?></button>
+                </div>
             </div>
             
-            <div id="selected-products-preview" class="selected-products-grid">
+            <div id="selected-products-preview" class="selected-products-grid sortable-products">
                 <div class="no-products-message"><?php esc_html_e('No products selected. Search and click products to add them.', 'swipecommerce-pro'); ?></div>
             </div>
         </div>
@@ -60,9 +63,15 @@ jQuery(document).ready(function($) {
     let currentSearchTerm = '';
     let selectedProductsCache = {};
 
-    // Initialize
+    // Initialize selected products cache first
+    initializeSelectedProductsCache();
+    
+    // Then load initial products and preview
     loadInitialProducts();
     loadSelectedProductsPreview();
+    
+    // Initialize drag-and-drop sorting
+    initializeSortableProducts();
     
     // Product search functionality
     let searchTimeout;
@@ -232,6 +241,11 @@ jQuery(document).ready(function($) {
             updateProductCardState(productCard, true);
             loadSelectedProductsPreview();
             updateSelectedCount();
+            
+            // Re-initialize sortable after adding new items
+            setTimeout(function() {
+                initializeSortableProducts();
+            }, 100);
         }
     }
     
@@ -269,6 +283,7 @@ jQuery(document).ready(function($) {
         
         if (selectedIds.length === 0) {
             container.html('<div class="no-products-message"><?php esc_html_e("No products selected. Search and click products to add them.", "swipecommerce-pro"); ?></div>');
+            container.removeClass('has-products');
             return;
         }
         
@@ -277,17 +292,28 @@ jQuery(document).ready(function($) {
             const product = selectedProductsCache[productId];
             if (product) {
                 html += createSelectedProductCard(product);
+            } else {
+                // If product not in cache, create a placeholder and fetch it
+                loadProductDataAndUpdate(productId);
             }
         });
         html += '</div>';
         
-        container.html(html);
+        container.html(html).addClass('has-products');
+        
+        // Initialize sortable after a short delay to ensure DOM is ready
+        setTimeout(function() {
+            initializeSortableProducts();
+        }, 50);
     }
 
     function createSelectedProductCard(product) {
         const imageUrl = product.image || '<?php echo wc_placeholder_img_src("thumbnail"); ?>';
         return `
             <div class="selected-product-item" data-product-id="${product.id}">
+                <div class="drag-handle" title="<?php esc_attr_e('Drag to reorder', 'swipecommerce-pro'); ?>">
+                    <span class="dashicons dashicons-menu"></span>
+                </div>
                 <img src="${imageUrl}" alt="${product.name}" class="selected-product-image">
                 <div class="selected-product-info">
                     <span class="selected-product-name">${product.name}</span>
@@ -328,6 +354,87 @@ jQuery(document).ready(function($) {
     
     // Initialize selected count
     updateSelectedCount();
+    
+    // New functions for fixing visibility and ordering
+    function initializeSelectedProductsCache() {
+        const selectedIds = getSelectedProductIds();
+        if (selectedIds.length > 0) {
+            // Load product data for already selected products
+            selectedIds.forEach(productId => {
+                if (!selectedProductsCache[productId]) {
+                    loadProductDataAndUpdate(productId);
+                }
+            });
+        }
+    }
+    
+    function loadProductDataAndUpdate(productId) {
+        // Fetch individual product data via AJAX
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'swipecommerce_get_product_data',
+                nonce: '<?php echo wp_create_nonce("swipecommerce_admin_nonce"); ?>',
+                product_id: productId
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    selectedProductsCache[productId] = response.data;
+                    // Refresh the selected products preview if this was the last missing product
+                    loadSelectedProductsPreview();
+                }
+            },
+            error: function() {
+                console.warn('Could not load product data for ID:', productId);
+            }
+        });
+    }
+    
+    function initializeSortableProducts() {
+        const container = $('#selected-products-preview .selected-products-list');
+        
+        // Destroy existing sortable if it exists
+        if (container.hasClass('ui-sortable')) {
+            container.sortable('destroy');
+        }
+        
+        // Initialize sortable if we have products
+        if ($('#selected-products-preview').hasClass('has-products') && container.length) {
+            container.sortable({
+                items: '.selected-product-item',
+                handle: '.drag-handle',
+                axis: 'y',
+                cursor: 'move',
+                placeholder: 'selected-product-placeholder',
+                tolerance: 'pointer',
+                start: function(event, ui) {
+                    ui.placeholder.height(ui.item.height());
+                    ui.item.addClass('dragging');
+                },
+                stop: function(event, ui) {
+                    ui.item.removeClass('dragging');
+                    updateProductOrderFromSortable();
+                }
+            });
+        }
+    }
+    
+    function updateProductOrderFromSortable() {
+        const orderedIds = [];
+        $('#selected-products-preview .selected-product-item').each(function() {
+            const productId = parseInt($(this).data('product-id'));
+            orderedIds.push(productId);
+        });
+        
+        // Update the hidden field
+        const hiddenField = $('#category_products');
+        const newValue = orderedIds.join(',');
+        
+        hiddenField.val(newValue);
+        updateSelectedCount();
+    }
+    
 });
 </script>
 

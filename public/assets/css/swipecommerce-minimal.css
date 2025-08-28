@@ -227,14 +227,15 @@ body {
 
 .swipecommerce-product-card {
     width: 200px;
-    background: white;
+    background: #f3f7f3;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
+    border: 1px solid #e3e3e3;
 }
 
 .swipecommerce-product-card:hover {
@@ -245,7 +246,7 @@ body {
 .swipecommerce-product-image {
     width: 100%;
     height: 200px;
-    background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+    background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -314,6 +315,7 @@ body {
 
 .swipecommerce-product-info {
     padding: 16px;
+    background: #f3f7f3;
 }
 
 .swipecommerce-product-name {
@@ -522,8 +524,8 @@ body {
 }
 
 .swipecommerce-product-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .swipecommerce-product-card.hovered {
